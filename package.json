@@ -12,11 +12,13 @@
   "author": "Felix Lange",
   "license": "AGPL-3.0-or-later",
   "dependencies": {
+    "@prisma/client": "^6.11.0",
     "@types/multer": "^1.4.12",
     "archiver": "^7.0.1",
     "express": "^5.1.0",
     "multer": "^2.0.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.1.0"
   },
   "type": "module",
   "devDependencies": {
@@ -27,6 +29,7 @@
     "@types/swagger-ui-express": "^4.1.8",
     "eslint": "^9.26.0",
     "globals": "^16.1.0",
+    "prisma": "^6.11.0",
     "tsc-esm-fix": "^3.1.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",

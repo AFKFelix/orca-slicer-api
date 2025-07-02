@@ -138,3 +138,6 @@ dist
 .test/
 
 .DS_Store
+
+/generated/prisma
+*.db
