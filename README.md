@@ -22,9 +22,15 @@ cd orca-slicer-api
 ORCASLICER_PATH=/your/path/OrcaSlicer
 DATA_PATH=/your/path/data
 ENV=dev
+DATABASE_URL=file:./dev.db
 
-# Install dependencies and start the dev server
+# Install dependencies
 npm install
+
+# Set up the local SQLite database with Prisma
+npx prisma migrate deploy
+
+# Start the dev server
 npm run dev
 ```
 
@@ -32,7 +38,8 @@ npm run dev
 
 `ORCASLICER_PATH` (required): Absolute path to the OrcaSlicer binary.\
 `DATA_PATH` (required): Base directory for user uploaded profiles.\
-`ENV` (required): Sets if run in development (dev) or production (prod)
+`ENV` (required): Sets if run in development (dev) or production (prod)\
+`DATABASE_URL` (required): Path to the SQLite database file
 
 Profiles are stored under:
 
@@ -44,6 +51,18 @@ Profiles are stored under:
 ```
 
 Each profile is a JSON file from OrcaSlicer.
+
+Models are stored under:
+
+```
+<DATA_PATH>/
+└── models/
+```
+
+## Database
+
+This project uses a local SQLite database for storing model metadata using [Prisma](https://www.prisma.io/).\
+The database file is created automatically based on the `DATABASE_URL`.
 
 ## Security
 

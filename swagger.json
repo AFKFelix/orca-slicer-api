@@ -10,9 +10,17 @@
       "url": "http://localhost:3000"
     }
   ],
+  "tags": [
+    { "name": "Models", "description": "3D model file management" },
+    { "name": "Slicing", "description": "3D model slicing operations" },
+    { "name": "Profiles", "description": "Slicing profile management" }
+  ],
   "paths": {
     "/slice": {
       "post": {
+        "tags": [
+          "Slicing"
+        ],
         "summary": "Slice a 3D model file",
         "requestBody": {
           "required": true,
@@ -107,6 +115,9 @@
     },
     "/profiles/{category}": {
       "post": {
+        "tags": [
+          "Profiles"
+        ],
         "summary": "Upload a profile (printer, preset, or filament)",
         "parameters": [
           {
@@ -174,6 +185,9 @@
         }
       },
       "get": {
+        "tags": [
+          "Profiles"
+        ],
         "summary": "List all profiles in a category",
         "parameters": [
           {
@@ -219,6 +233,9 @@
     },
     "/profiles/{category}/{name}": {
       "get": {
+        "tags": [
+          "Profiles"
+        ],
         "summary": "Get a specific profile by name",
         "parameters": [
           {
@@ -265,6 +282,159 @@
               }
             }
           }
+        }
+      }
+    },
+    "/models": {
+      "post": {
+        "tags": ["Models"],
+        "summary": "Upload a 3D model file",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "3D model file (STL, STEP, 3MF)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Model uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "b1e2c3d4-5678-4f9a-8b2c-123456789abc" },
+                    "name": { "type": "string", "example": "my_model.stl" }
+                  }
+                },
+                "example": { "id": "b1e2c3d4-5678-4f9a-8b2c-123456789abc", "name": "my_model.stl" }
+              }
+            }
+          },
+          "400": { "description": "Invalid input", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "tags": ["Models"],
+        "summary": "List all models",
+        "responses": {
+          "200": {
+            "description": "List of models",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "string", "example": "b1e2c3d4-5678-4f9a-8b2c-123456789abc" },
+                      "file_name": { "type": "string", "example": "my_model.stl" },
+                      "created": { "type": "string", "format": "date-time", "example": "2025-07-02T12:34:56.000Z" },
+                      "updated": { "type": "string", "format": "date-time", "example": "2025-07-02T12:34:56.000Z" }
+                    }
+                  }
+                },
+                "example": [
+                  { "id": "b1e2c3d4-5678-4f9a-8b2c-123456789abc", "file_name": "my_model.stl", "created": "2025-07-02T12:34:56.000Z", "updated": "2025-07-02T12:34:56.000Z" }
+                ]
+              }
+            }
+          },
+          "500": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/models/{id}": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Get model metadata by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Model GUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string", "example": "b1e2c3d4-5678-4f9a-8b2c-123456789abc" },
+                    "file_name": { "type": "string", "example": "my_model.stl" },
+                    "created": { "type": "string", "format": "date-time", "example": "2025-07-02T12:34:56.000Z" },
+                    "updated": { "type": "string", "format": "date-time", "example": "2025-07-02T12:34:56.000Z" }
+                  }
+                },
+                "example": { "id": "b1e2c3d4-5678-4f9a-8b2c-123456789abc", "file_name": "my_model.stl", "created": "2025-07-02T12:34:56.000Z", "updated": "2025-07-02T12:34:56.000Z" }
+              }
+            }
+          },
+          "404": { "description": "Model not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "delete": {
+        "tags": ["Models"],
+        "summary": "Delete a model by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Model GUID"
+          }
+        ],
+        "responses": {
+          "204": { "description": "Model deleted" },
+          "404": { "description": "Model not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/models/{id}/file": {
+      "get": {
+        "tags": ["Models"],
+        "summary": "Download a model file by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Model GUID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model file download",
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "404": { "description": "Model not found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "500": { "description": "Server error", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
         }
       }
     }
