@@ -2,7 +2,16 @@ FROM node:22-bookworm AS build
 
 WORKDIR /app
 
-RUN curl -o orca.AppImage -L https://github.com/SoftFever/OrcaSlicer/releases/download/v2.3.0/OrcaSlicer_Linux_AppImage_V2.3.0.AppImage
+ARG ORCASLICER_VERSION
+
+RUN if [ -z "$ORCASLICER_VERSION" ]; then \
+      echo "ORCASLICER_VERSION not set"; \
+      exit 1; \
+    else \
+      echo "ORCASLICER_VERSION is $ORCASLICER_VERSION"; \
+    fi
+
+RUN curl -o orca.AppImage -L "https://github.com/SoftFever/OrcaSlicer/releases/download/v$ORCASLICER_VERSION/OrcaSlicer_Linux_AppImage_V$ORCASLICER_VERSION.AppImage"
 RUN chmod +x orca.AppImage
 RUN ./orca.AppImage --appimage-extract
 RUN rm orca.AppImage
