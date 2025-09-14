@@ -26,12 +26,12 @@ This project only provides an REST API to the OrcaSlicer CLI, full credit to the
 
 You can run the service in a Docker container. This was tested on Linux for now only and might still have some issues.
 
-Run the following commands to set up and start the Docker container (you can change the OrcaSlicer version as needed):
+Run the following commands to set up and start the Docker container (you can change the OrcaSlicer version and architecture (arm64/amd64) as needed):
 
 ```bash
 git clone https://github.com/AFKFelix/orca-slicer-api.git
 cd orca-slicer-api
-docker build --build-arg ORCASLICER_VERSION=2.3.0 -t orca-slicer-api .
+docker build --build-arg ORCASLICER_VERSION=2.3.0 --build-arg TARGETARCH=amd64 -t orca-slicer-api .
 docker run -d -p 3000:3000 --name orca-slicer-api orca-slicer-api
 ```
 
