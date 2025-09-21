@@ -21,7 +21,12 @@ export const uploadJson = multer({
 export const uploadModel = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = ["model/stl", "application/step", "model/3mf"];
+    const allowedMimeTypes = [
+      "model/stl",
+      "application/step",
+      "model/step",
+      "model/3mf",
+    ];
     const allowedExts = [".stl", ".step", ".stp", ".3mf"];
     const ext = path.extname(file.originalname).toLowerCase();
 

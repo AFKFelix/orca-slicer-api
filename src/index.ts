@@ -3,9 +3,27 @@ import profiles from "./routes/profiles/route";
 import slicing from "./routes/slicing/route";
 import { errorHandler } from "./middleware/error";
 import swaggerUi from "swagger-ui-express";
+import cors from "cors";
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+app.use(
+  cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: [
+      "Content-Disposition",
+      "ETag",
+      "Last-Modified",
+      "Content-Length",
+      "X-Filament-Used-G",
+      "X-Filament-Used-Mm",
+      "X-Print-Time-Seconds",
+    ],
+  })
+);
 
 app.use(express.json());
 
