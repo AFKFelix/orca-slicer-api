@@ -1,8 +1,9 @@
 import express from "express";
+import swaggerUi from "swagger-ui-express";
+import { errorHandler } from "./middleware/error";
+import health from "./routes/health/route";
 import profiles from "./routes/profiles/route";
 import slicing from "./routes/slicing/route";
-import { errorHandler } from "./middleware/error";
-import swaggerUi from "swagger-ui-express";
 import cors from "cors";
 
 const app = express();
@@ -27,6 +28,7 @@ app.use(
 
 app.use(express.json());
 
+app.use("/health", health);
 app.use("/profiles", profiles);
 app.use("/slice", slicing);
 
