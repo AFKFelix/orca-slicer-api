@@ -1,0 +1,184 @@
+name: Build and Push Docker Images
+
+on:
+  push:
+    tags:
+      - 'v*'
+  schedule:
+    # Nightly builds
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        orca_version: ['2.3.0', '2.3.1']
+        platform:
+          - runner: ubuntu-latest
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            arch: arm64
+    
+    runs-on: ${{ matrix.platform.runner }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Generate Docker metadata
+        id: meta
+        run: |
+          IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          ORCA_VERSION="${{ matrix.orca_version }}"
+          ARCH="${{ matrix.platform.arch }}"
+          DATE=$(date +%Y%m%d)
+          
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v.*$ ]]; then
+            # Release build
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+            TAG="${IMAGE_NAME_LOWER}:${RELEASE_TAG}-orca${ORCA_VERSION}-${ARCH}"
+            echo "is_release=true" >> $GITHUB_OUTPUT
+            echo "release_tag=${RELEASE_TAG}" >> $GITHUB_OUTPUT
+          else
+            # Nightly build
+            TAG="${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-${ARCH},${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-${DATE}-${ARCH}"
+            echo "is_release=false" >> $GITHUB_OUTPUT
+            echo "release_tag=nightly" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "tags=$TAG" >> $GITHUB_OUTPUT
+          echo "image_name=$IMAGE_NAME_LOWER" >> $GITHUB_OUTPUT
+          echo "Building tags: $TAG"
+      
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          platforms: linux/${{ matrix.platform.arch }}
+          build-args: |
+            ORCA_VERSION=${{ matrix.orca_version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+      
+      - name: Test container health
+        run: |
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | cut -d',' -f1)
+          echo "Testing container: $FIRST_TAG"
+          mkdir -p /tmp/orca-data
+
+          CONTAINER_ID=$(docker run -d \
+            -p 3000:3000 \
+            -v /tmp/orca-data:/app/data \
+            "$FIRST_TAG")
+
+          echo "Container started: $CONTAINER_ID"
+          echo "Waiting for container to be healthy..."
+          for i in {1..60}; do
+            if docker inspect --format='{{.State.Health.Status}}' "$CONTAINER_ID" 2>/dev/null | grep -q "healthy"; then
+              echo "✅ Container is healthy after ${i} seconds"
+              break
+            fi
+            if [ $i -eq 60 ]; then
+              echo "❌ Container failed to become healthy"
+              docker logs "$CONTAINER_ID"
+              docker stop "$CONTAINER_ID"
+              exit 1
+            fi
+            sleep 1
+          done
+          
+          HEALTH_RESPONSE=$(curl -s http://localhost:3000/health)
+          echo "Health check response: $HEALTH_RESPONSE"
+          
+          if echo "$HEALTH_RESPONSE" | jq -e '.status == "healthy"' > /dev/null; then
+            echo "✅ Health check endpoint returned healthy status"
+          else
+            echo "❌ Health check failed"
+            echo "$HEALTH_RESPONSE" | jq .
+            docker logs "$CONTAINER_ID"
+            docker stop "$CONTAINER_ID"
+            exit 1
+          fi
+          
+          if echo "$HEALTH_RESPONSE" | jq -e '.checks.orcaslicer.available == true' > /dev/null; then
+            ORCA_VERSION=$(echo "$HEALTH_RESPONSE" | jq -r '.checks.orcaslicer.version')
+            echo "✅ OrcaSlicer is available (version: $ORCA_VERSION)"
+          else
+            echo "❌ OrcaSlicer is not available"
+            echo "$HEALTH_RESPONSE" | jq .
+            docker logs "$CONTAINER_ID"
+            docker stop "$CONTAINER_ID"
+            exit 1
+          fi
+          
+          docker stop "$CONTAINER_ID"
+          rm -rf /tmp/orca-data
+          
+          echo "✅ All health checks passed!"
+
+  create-manifests:
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        orca_version: ['2.3.0', '2.3.1']
+    
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Create and push multi-arch manifest
+        run: |
+          IMAGE_NAME_LOWER=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          ORCA_VERSION="${{ matrix.orca_version }}"
+          DATE=$(date +%Y%m%d)
+          
+          if [[ "${{ github.ref }}" =~ ^refs/tags/v.*$ ]]; then
+            # Release build
+            RELEASE_TAG="${GITHUB_REF#refs/tags/}"
+            MANIFEST_TAG="${IMAGE_NAME_LOWER}:${RELEASE_TAG}-orca${ORCA_VERSION}"
+            LATEST_TAG="${IMAGE_NAME_LOWER}:latest-orca${ORCA_VERSION}"
+            
+            docker buildx imagetools create -t "$MANIFEST_TAG" -t "$LATEST_TAG" \
+              "${IMAGE_NAME_LOWER}:${RELEASE_TAG}-orca${ORCA_VERSION}-amd64" \
+              "${IMAGE_NAME_LOWER}:${RELEASE_TAG}-orca${ORCA_VERSION}-arm64"
+          else
+            # Nightly build
+            MANIFEST_TAG="${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}"
+            DATED_TAG="${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-${DATE}"
+            
+            docker buildx imagetools create -t "$MANIFEST_TAG" \
+              "${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-amd64" \
+              "${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-arm64"
+            
+            docker buildx imagetools create -t "$DATED_TAG" \
+              "${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-${DATE}-amd64" \
+              "${IMAGE_NAME_LOWER}:nightly-orca${ORCA_VERSION}-${DATE}-arm64"
+          fi
