@@ -41,14 +41,12 @@ jobs:
             "https://api.github.com/repos/SoftFever/OrcaSlicer/releases/tags/$LATEST_RELEASE")
           
           RELEASE_NAME=$(echo "$RELEASE_DATA" | jq -r '.name')
-          RELEASE_BODY=$(echo "$RELEASE_DATA" | jq -r '.body')
           RELEASE_URL=$(echo "$RELEASE_DATA" | jq -r '.html_url')
           PUBLISHED_AT=$(echo "$RELEASE_DATA" | jq -r '.published_at')
           
           echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
           echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
           echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
-          echo "$RELEASE_BODY" > release_body.txt
           
       - name: Check if issue already exists
         id: check_issue
@@ -78,7 +76,6 @@ jobs:
           RELEASE_NAME="${{ steps.get_release.outputs.release_name }}"
           RELEASE_URL="${{ steps.get_release.outputs.release_url }}"
           PUBLISHED_AT="${{ steps.get_release.outputs.published_at }}"
-          RELEASE_BODY=$(cat release_body.txt)
           FORMATTED_DATE=$(date -d "$PUBLISHED_AT" "+%B %d, %Y")
           cat > issue_body.txt << EOF
           ## New OrcaSlicer Release Available: $RELEASE_TAG
@@ -91,8 +88,7 @@ jobs:
           - **Published:** $FORMATTED_DATE
           - **Release URL:** $RELEASE_URL
           
-          **Release Notes:**
-          $RELEASE_BODY
+          📝 **[View Full Release Notes]($RELEASE_URL)**
           
           ---
           
