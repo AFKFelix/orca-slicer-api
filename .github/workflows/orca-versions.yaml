@@ -1,0 +1,132 @@
+name: Check OrcaSlicer Releases
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  check-releases:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+          
+      - name: Get latest OrcaSlicer release
+        id: get_release
+        run: |
+          LATEST_RELEASE=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/SoftFever/OrcaSlicer/releases" | \
+            jq -r '.[] | select(.prerelease == false) | .tag_name' | \
+            head -n 1)
+          
+          if [ -z "$LATEST_RELEASE" ]; then
+            echo "No stable release found"
+            exit 1
+          fi
+          
+          echo "Latest release: $LATEST_RELEASE"
+          echo "release_tag=$LATEST_RELEASE" >> $GITHUB_OUTPUT
+
+          RELEASE_DATA=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/SoftFever/OrcaSlicer/releases/tags/$LATEST_RELEASE")
+          
+          RELEASE_NAME=$(echo "$RELEASE_DATA" | jq -r '.name')
+          RELEASE_BODY=$(echo "$RELEASE_DATA" | jq -r '.body')
+          RELEASE_URL=$(echo "$RELEASE_DATA" | jq -r '.html_url')
+          PUBLISHED_AT=$(echo "$RELEASE_DATA" | jq -r '.published_at')
+          
+          echo "release_name=$RELEASE_NAME" >> $GITHUB_OUTPUT
+          echo "release_url=$RELEASE_URL" >> $GITHUB_OUTPUT
+          echo "published_at=$PUBLISHED_AT" >> $GITHUB_OUTPUT
+          echo "$RELEASE_BODY" > release_body.txt
+          
+      - name: Check if issue already exists
+        id: check_issue
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.release_tag }}"
+          SEARCH_QUERY="repo:${{ github.repository }}+label:orca-slicer+label:release+in:title+${RELEASE_TAG}+is:issue"
+          
+          EXISTING_ISSUE=$(curl -s \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/search/issues?q=${SEARCH_QUERY}" | \
+            jq -r '.items[0].number // empty')
+          
+          if [ -n "$EXISTING_ISSUE" ]; then
+            echo "Issue already exists for release $RELEASE_TAG: #$EXISTING_ISSUE"
+            echo "issue_exists=true" >> $GITHUB_OUTPUT
+            echo "existing_issue_number=$EXISTING_ISSUE" >> $GITHUB_OUTPUT
+          else
+            echo "No existing issue found for release $RELEASE_TAG"
+            echo "issue_exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Create issue for new release
+        if: steps.check_issue.outputs.issue_exists == 'false'
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.release_tag }}"
+          RELEASE_NAME="${{ steps.get_release.outputs.release_name }}"
+          RELEASE_URL="${{ steps.get_release.outputs.release_url }}"
+          PUBLISHED_AT="${{ steps.get_release.outputs.published_at }}"
+          RELEASE_BODY=$(cat release_body.txt)
+          FORMATTED_DATE=$(date -d "$PUBLISHED_AT" "+%B %d, %Y")
+          cat > issue_body.txt << EOF
+          ## New OrcaSlicer Release Available: $RELEASE_TAG
+          
+          A new release of OrcaSlicer has been published!
+          
+          **Release Information:**
+          - **Version:** $RELEASE_TAG
+          - **Name:** $RELEASE_NAME
+          - **Published:** $FORMATTED_DATE
+          - **Release URL:** $RELEASE_URL
+          
+          **Release Notes:**
+          $RELEASE_BODY
+          
+          ---
+          
+          ### Action Items:
+          - [ ] Review the release notes
+          - [ ] Test compatibility with our API
+          - [ ] Update documentation if needed
+          - [ ] Consider updating supported versions
+          
+          *This issue was automatically created by the OrcaSlicer release monitoring workflow.*
+          EOF
+          
+          jq -n \
+            --arg title "New OrcaSlicer Release: $RELEASE_TAG" \
+            --arg body "$(cat issue_body.txt)" \
+            --argjson labels '["enhancement", "orca-slicer", "release"]' \
+            '{title: $title, body: $body, labels: $labels}' | \
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/json" \
+            -d @- \
+            "https://api.github.com/repos/${{ github.repository }}/issues"
+            
+          echo "Created new issue for OrcaSlicer release $RELEASE_TAG"
+          
+      - name: Summary
+        run: |
+          RELEASE_TAG="${{ steps.get_release.outputs.release_tag }}"
+          ISSUE_EXISTS="${{ steps.check_issue.outputs.issue_exists }}"
+          
+          if [ "$ISSUE_EXISTS" == "true" ]; then
+            EXISTING_ISSUE="${{ steps.check_issue.outputs.existing_issue_number }}"
+            echo "✅ Found OrcaSlicer release $RELEASE_TAG (issue already exists: #$EXISTING_ISSUE)"
+          else
+            echo "🆕 Found new OrcaSlicer release $RELEASE_TAG - created new issue"
+          fi
