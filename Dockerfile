@@ -1,13 +1,26 @@
 FROM node:22-bookworm AS build
 
 ARG ORCA_VERSION=2.3.1
+ARG TARGETARCH
 
 WORKDIR /app
 
-RUN curl -o orca.AppImage -L https://github.com/SoftFever/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_V${ORCA_VERSION}.AppImage
-RUN chmod +x orca.AppImage
-RUN ./orca.AppImage --appimage-extract
-RUN rm orca.AppImage
+# Download OrcaSlicer based on architecture
+# AMD64: Use official AppImage from SoftFever/OrcaSlicer
+# ARM64: Use custom-built AppImage from kldzj/orca-slicer-arm64
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+      echo "Downloading ARM64 AppImage from kldzj/orca-slicer-arm64..."; \
+      curl -o orca.AppImage -L "https://github.com/kldzj/orca-slicer-arm64/releases/download/v${ORCA_VERSION}-arm64/OrcaSlicer-${ORCA_VERSION}-arm64-linux.AppImage"; \
+      chmod +x orca.AppImage; \
+      ./orca.AppImage --appimage-extract; \
+      rm orca.AppImage; \
+    else \
+      echo "Downloading AMD64 AppImage from SoftFever/OrcaSlicer..."; \
+      curl -o orca.AppImage -L "https://github.com/SoftFever/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_V${ORCA_VERSION}.AppImage"; \
+      chmod +x orca.AppImage; \
+      ./orca.AppImage --appimage-extract; \
+      rm orca.AppImage; \
+    fi
 
 COPY package*.json ./
 
