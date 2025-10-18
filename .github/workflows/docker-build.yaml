@@ -4,9 +4,6 @@ on:
   push:
     tags:
       - 'v*'
-  schedule:
-    # Nightly builds
-    - cron: '0 2 * * *'
   workflow_dispatch:
 
 permissions:
