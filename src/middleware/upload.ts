@@ -4,6 +4,14 @@ import { AppError } from "./error";
 
 const storage = multer.memoryStorage();
 
+const allowedModelMimeTypes = [
+  "model/stl",
+  "application/step",
+  "model/step",
+  "model/3mf",
+];
+const allowedModelExts = [".stl", ".step", ".stp", ".3mf"];
+
 export const uploadJson = multer({
   storage,
   fileFilter: (req, file, cb) => {
@@ -21,18 +29,11 @@ export const uploadJson = multer({
 export const uploadModel = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      "model/stl",
-      "application/step",
-      "model/step",
-      "model/3mf",
-    ];
-    const allowedExts = [".stl", ".step", ".stp", ".3mf"];
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (
-      !allowedMimeTypes.includes(file.mimetype) ||
-      !allowedExts.includes(ext)
+      !allowedModelMimeTypes.includes(file.mimetype) ||
+      !allowedModelExts.includes(ext)
     ) {
       return cb(
         new AppError(
@@ -42,6 +43,52 @@ export const uploadModel = multer({
       );
     }
     cb(null, true);
+  },
+  limits: { fileSize: 100_000_000 },
+});
+
+export const uploadFullPrint = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const modelField = "file";
+    const profileFields = [
+      "printerProfile",
+      "presetProfile",
+      "filamentProfile",
+    ];
+
+    const ext = path.extname(file.originalname).toLowerCase();
+
+    if (file.fieldname === modelField) {
+      if (
+        !allowedModelMimeTypes.includes(file.mimetype) ||
+        !allowedModelExts.includes(ext)
+      ) {
+        return cb(
+          new AppError(
+            400,
+            "Invalid file type. Only STL, STEP, and 3MF files are allowed."
+          )
+        );
+      }
+
+      return cb(null, true);
+    }
+
+    if (profileFields.includes(file.fieldname)) {
+      if (file.mimetype !== "application/json" || ext !== ".json") {
+        return cb(
+          new AppError(
+            400,
+            `Invalid file type for ${file.fieldname}. Only JSON files are allowed.`
+          )
+        );
+      }
+
+      return cb(null, true);
+    }
+
+    return cb(new AppError(400, "Unexpected file field received."));
   },
   limits: { fileSize: 100_000_000 },
 });
