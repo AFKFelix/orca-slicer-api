@@ -24,7 +24,9 @@ export function errorHandler(
     ${err.causeMessage ? `Cause: ${err.causeMessage}` : ""}`
   );
 
-  res.status(err.status).json({
+  const status = typeof err.status === "number" ? err.status : 500;
+
+  res.status(status).json({
     message: err.message,
   });
 }
