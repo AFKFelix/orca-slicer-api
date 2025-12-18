@@ -32,6 +32,21 @@
                     "format": "binary",
                     "description": "STL, STEP, or 3MF model file"
                   },
+                  "printerProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in printer field)"
+                  },
+                  "presetProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in preset field)"
+                  },
+                  "filamentProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
+                  },
                   "printer": {
                     "type": "string",
                     "description": "Printer profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"

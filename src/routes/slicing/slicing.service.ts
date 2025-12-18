@@ -3,25 +3,37 @@ import * as path from "path";
 import * as os from "os";
 import { execFileSync } from "child_process";
 import { AppError } from "../../middleware/error";
-import type { SlicingSettings, SliceResult, SliceMetaData } from "./models";
+import type {
+  SlicingSettings,
+  SliceResult,
+  SliceMetaData,
+  UploadedProfiles,
+} from "./models";
 import { Open } from "unzipper";
 
 export async function sliceModel(
   file: Buffer,
   filename: string,
-  settings: SlicingSettings
+  settings: SlicingSettings,
+  tempProfiles?: UploadedProfiles
 ): Promise<SliceResult> {
   let workdir: string;
   let inPath: string;
+  let inputDir: string;
   let outputDir: string;
   try {
     workdir = await fs.mkdtemp(path.join(os.tmpdir(), "slice-"));
-    const inputDir = path.join(workdir, "input");
+    inputDir = path.join(workdir, "input");
     outputDir = path.join(workdir, "output");
     await fs.mkdir(inputDir, { recursive: true });
     await fs.mkdir(outputDir, { recursive: true });
+
     inPath = path.join(inputDir, filename);
     await fs.writeFile(inPath, file);
+
+    if (tempProfiles) {
+      await writeTempProfiles(tempProfiles, inputDir);
+    }
   } catch (error) {
     throw new AppError(
       500,
@@ -49,12 +61,17 @@ export async function sliceModel(
     args.push("--orient", settings.orient ? "1" : "0");
   }
 
-  if (settings.printer && settings.preset) {
+  if (tempProfiles?.printer && tempProfiles?.preset) {
+    const settingsArg = `${inputDir}/printer.json;${inputDir}/preset.json`;
+    args.push("--load-settings", settingsArg);
+  } else if (settings.printer && settings.preset) {
     const settingsArg = `${basePath}/printers/${settings.printer}.json;${basePath}/presets/${settings.preset}.json`;
     args.push("--load-settings", settingsArg);
   }
 
-  if (settings.filament) {
+  if (tempProfiles?.filament) {
+    args.push("--load-filaments", `${inputDir}/filament.json`);
+  } else if (settings.filament) {
     args.push(
       "--load-filaments",
       `${basePath}/filaments/${settings.filament}.json`
@@ -222,4 +239,35 @@ function parseMetaDataFromString(content: string): SliceMetaData {
   }
 
   return data;
+}
+
+async function writeTempProfiles(
+  profiles: UploadedProfiles,
+  inputDir: string
+): Promise<void> {
+  try {
+    const printerPath = path.join(inputDir, "printer.json");
+    const presetPath = path.join(inputDir, "preset.json");
+    const filamentPath = path.join(inputDir, "filament.json");
+
+    const writes: Promise<void>[] = [];
+
+    if (profiles.printer && profiles.printer.length > 0) {
+      writes.push(fs.writeFile(printerPath, profiles.printer));
+    }
+    if (profiles.preset && profiles.preset.length > 0) {
+      writes.push(fs.writeFile(presetPath, profiles.preset));
+    }
+    if (profiles.filament && profiles.filament.length > 0) {
+      writes.push(fs.writeFile(filamentPath, profiles.filament));
+    }
+
+    await Promise.all(writes);
+  } catch (error) {
+    throw new AppError(
+      500,
+      "Failed to write temporary profiles",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
 }
