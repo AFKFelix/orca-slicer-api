@@ -23,7 +23,7 @@ router.post(
   ]),
   async (req, res) => {
     if (!req.files || Array.isArray(req.files)) {
-      throw new AppError(400, "Files are required for slicing");
+      throw new AppError(400, "Invalid file upload format: files must be uploaded as named fields");
     }
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
