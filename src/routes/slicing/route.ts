@@ -29,7 +29,7 @@ router.post(
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
     if (!files["file"]) {
-      throw new AppError(400, "Files are required for slicing");
+      throw new AppError(400, "Model file is required for slicing");
     }
 
     const modelFile = files["file"][0];
