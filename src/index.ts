@@ -6,33 +6,41 @@ import profiles from "./routes/profiles/route";
 import slicing from "./routes/slicing/route";
 import cors from "cors";
 
-const app = express();
+export const configureApp = () => {
+  const app = express();
+
+  app.use(
+    cors({
+      origin: process.env.CORS_ORIGINS ?? "*", // if not set, allow all origins
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization"],
+      exposedHeaders: [
+        "Content-Disposition",
+        "ETag",
+        "Last-Modified",
+        "Content-Length",
+        "X-Filament-Used-G",
+        "X-Filament-Used-Mm",
+        "X-Print-Time-Seconds",
+      ],
+    })
+  );
+
+  app.use(express.json());
+
+  app.use("/health", health);
+  app.use("/profiles", profiles);
+  app.use("/slice", slicing);
+
+  app.use(errorHandler);
+
+  return app;
+};
+
+const app = configureApp();
+
 const port = process.env.PORT || 3000;
 
-app.use(
-  cors({
-    origin: process.env.CORS_ORIGINS ?? "*", // if not set, allow all origins
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    exposedHeaders: [
-      "Content-Disposition",
-      "ETag",
-      "Last-Modified",
-      "Content-Length",
-      "X-Filament-Used-G",
-      "X-Filament-Used-Mm",
-      "X-Print-Time-Seconds",
-    ],
-  })
-);
-
-app.use(express.json());
-
-app.use("/health", health);
-app.use("/profiles", profiles);
-app.use("/slice", slicing);
-
-app.use(errorHandler);
 if (process.env.NODE_ENV !== "production") {
   import("../swagger.json", { with: { type: "json" } })
     .then((swaggerDocument) => {

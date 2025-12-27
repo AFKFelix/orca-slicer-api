@@ -9,7 +9,8 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDir": "src",
+    "rootDir": ".",
+    "types": ["vitest"]
   },
   "include": ["**/*.ts"],
   "exclude": ["dist"]
