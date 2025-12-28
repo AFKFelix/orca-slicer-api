@@ -204,34 +204,65 @@ function parseMetaDataFromString(content: string): SliceMetaData {
   };
 
   try {
-    const lines = content.split("\n");
-
-    const timeRegex =
-      /total estimated time:\s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i;
-    for (const line of lines) {
-      const match = line.match(timeRegex);
-      if (match) {
-        const days = parseInt(match[2] || "0");
-        const hours = parseInt(match[3] || "0");
-        const minutes = parseInt(match[4] || "0");
-        const seconds = parseInt(match[5] || "0");
+    // Extract print time
+    const timeIndex = content.indexOf("total estimated time");
+    if (timeIndex !== -1) {
+      const timeSlice = content.slice(timeIndex, timeIndex + 80);
+      const timeMatch = timeSlice.match(
+        /total estimated time:\s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i
+      );
+      if (timeMatch) {
+        const days = parseInt(timeMatch[2] || "0");
+        const hours = parseInt(timeMatch[3] || "0");
+        const minutes = parseInt(timeMatch[4] || "0");
+        const seconds = parseInt(timeMatch[5] || "0");
         data.printTime = days * 86400 + hours * 3600 + minutes * 60 + seconds;
-        break;
       }
     }
 
-    //The estimated filament stands as last of the whole file, so we read it from the end
-    const regex = /\d+(\.\d+)?/;
-    for (let i = 0; i < 10; i++) {
-      const line = lines.pop();
-      if (!line) continue;
-
-      if (line.startsWith("; filament used [g]")) {
-        data.filamentUsedG = parseFloat(line.match(regex)?.[0] || "0");
+    if (timeIndex === -1) {
+      const altTimeIndex = content.indexOf(
+        "; estimated printing time (normal mode)"
+      );
+      if (altTimeIndex !== -1) {
+        const timeSlice = content.slice(altTimeIndex, altTimeIndex + 100);
+        const timeMatch = timeSlice.match(
+          /; estimated printing time \(normal mode\) = \s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i
+        );
+        if (timeMatch) {
+          const days = parseInt(timeMatch[2] || "0");
+          const hours = parseInt(timeMatch[3] || "0");
+          const minutes = parseInt(timeMatch[4] || "0");
+          const seconds = parseInt(timeMatch[5] || "0");
+          data.printTime = days * 86400 + hours * 3600 + minutes * 60 + seconds;
+        }
       }
+    }
 
-      if (line.startsWith("; filament used [mm]")) {
-        data.filamentUsedMm = parseFloat(line.match(regex)?.[0] || "0");
+    // Extract filament used [mm]
+    const filamentMmIndex = content.indexOf("; filament used [mm]");
+    if (filamentMmIndex !== -1) {
+      const filamentMmSlice = content.slice(
+        filamentMmIndex,
+        filamentMmIndex + 50
+      );
+      const mmMatch = filamentMmSlice.match(
+        /; filament used \[mm\] = \s*(\d+(\.\d+)?)/
+      );
+      if (mmMatch) {
+        data.filamentUsedMm = parseFloat(mmMatch[1]);
+      }
+    }
+
+    // Extract filament used [g]
+    const filamentGIndex = content.indexOf("; filament used [g]");
+    if (filamentGIndex !== -1) {
+      const filamentGSlice = content.slice(filamentGIndex, filamentGIndex + 50);
+      const gMatch = filamentGSlice.match(
+        /; filament used \[g\] = \s*(\d+(\.\d+)?)/
+      );
+      if (gMatch) {
+        data.filamentUsedG = parseFloat(gMatch[1]);
       }
     }
   } catch (err) {
