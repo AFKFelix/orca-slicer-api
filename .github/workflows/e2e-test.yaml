@@ -29,6 +29,7 @@ jobs:
           context: .
           file: tests/docker/Dockerfile.test
           push: false
+          load: true
           tags: orca-v${{ inputs.orca_version }}-api-test
           build-args: |
             ORCA_VERSION=${{ inputs.orca_version }}
