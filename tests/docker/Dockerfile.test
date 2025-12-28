@@ -1,0 +1,45 @@
+FROM ubuntu:24.04
+
+ARG ORCA_VERSION=2.3.1
+WORKDIR /app
+
+RUN apt-get update \
+	&& apt-get upgrade -y \
+	&& apt-get install -y --no-install-recommends \
+	curl ca-certificates gnupg \
+	&& mkdir -p /etc/apt/keyrings \
+	&& curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+	&& echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_22.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends \
+	nodejs \
+	libgl1 libgl1-mesa-dri libegl1 \
+	libgtk-3-0 \
+	libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
+	libwebkit2gtk-4.1-0 \
+	&& update-ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
+
+RUN echo "Downloading AMD64 AppImage from SoftFever/OrcaSlicer..."; \
+	curl -o orca.AppImage -L "https://github.com/SoftFever/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_V${ORCA_VERSION}.AppImage"; \
+	chmod +x orca.AppImage; \
+	./orca.AppImage --appimage-extract; \
+	rm orca.AppImage; 
+
+COPY package*.json ./
+
+RUN npm ci
+
+COPY . .
+COPY tests ./
+
+ENV PORT=3000
+ENV ORCASLICER_PATH=/app/squashfs-root/AppRun
+ENV DATA_PATH=/app/data
+ENV NODE_ENV=test
+ENV DATA_PATH=/tmp/data
+ENV OUTPUT_PATH=/tmp/output
+
+RUN mkdir -p /tmp/data /tmp/output
+
+CMD ["npm", "run", "test:e2e"]
