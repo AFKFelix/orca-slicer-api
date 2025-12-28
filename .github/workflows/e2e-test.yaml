@@ -1,0 +1,37 @@
+name: Run E2E Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      orca_version:
+        description: "OrcaSlicer version to test"
+        required: false
+        default: "2.3.0"
+
+jobs:
+  test:
+    name: E2E Test (Orca v${{ inputs.orca_version }})
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build E2E tests
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: tests/docker/Dockerfile.test
+          push: false
+          tags: orca-v${{ inputs.orca_version }}-api-test
+          build-args: |
+            ORCA_VERSION=${{ inputs.orca_version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests
+        run: |
+          docker run --rm orca-v${{ inputs.orca_version }}-api-test
