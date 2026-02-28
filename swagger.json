@@ -290,6 +290,43 @@
           }
         }
       }
+      ,
+      "delete": {
+        "tags": ["Profiles"],
+        "summary": "Delete a specific profile by name",
+        "description": "Deletes a specific printer, preset, or filament profile by name.",
+        "parameters": [
+          { "$ref": "#/components/parameters/Category" },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" },
+            "description": "Profile name (alphanumeric)"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Profile deleted"
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
