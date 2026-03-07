@@ -10,6 +10,7 @@ import { getMetaDataFromFile, sliceModel } from "./slicing.service";
 import fs from "fs/promises";
 import path from "path";
 import archiver from "archiver";
+import { generateMetaDataHeaders } from "./helpers";
 
 const router = Router();
 
@@ -25,7 +26,7 @@ router.post(
     if (!req.files || Array.isArray(req.files)) {
       throw new AppError(
         400,
-        "Invalid file upload format: files must be uploaded as named fields"
+        "Invalid file upload format: files must be uploaded as named fields",
       );
     }
 
@@ -45,7 +46,7 @@ router.post(
         printer: files["printerProfile"]?.[0]?.buffer,
         preset: files["presetProfile"]?.[0]?.buffer,
         filament: files["filamentProfile"]?.[0]?.buffer,
-      } as UploadedProfiles
+      } as UploadedProfiles,
     );
 
     if (gcodes.length === 1) {
@@ -95,15 +96,7 @@ router.post(
     } else {
       throw new AppError(500, "No files generated during slicing");
     }
-  }
+  },
 );
-
-function generateMetaDataHeaders(metadata: SliceMetaData) {
-  const headers: Record<string, string> = {};
-  headers["X-Print-Time-Seconds"] = metadata.printTime.toString();
-  headers["X-Filament-Used-g"] = metadata.filamentUsedG.toString();
-  headers["X-Filament-Used-mm"] = metadata.filamentUsedMm.toString();
-  return headers;
-}
 
 export default router;

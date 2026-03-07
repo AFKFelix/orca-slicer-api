@@ -3,6 +3,7 @@ import swaggerUi from "swagger-ui-express";
 import { errorHandler } from "./middleware/error";
 import health from "./routes/health/route";
 import profiles from "./routes/profiles/route";
+import asyncSlicing from "./routes/slicing/async.route";
 import slicing from "./routes/slicing/route";
 import cors from "cors";
 
@@ -31,6 +32,7 @@ export const configureApp = () => {
   app.use("/health", health);
   app.use("/profiles", profiles);
   app.use("/slice", slicing);
+  app.use("/slice-async", asyncSlicing);
 
   app.use(errorHandler);
 
