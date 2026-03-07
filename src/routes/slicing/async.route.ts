@@ -165,13 +165,20 @@ router.get("/:requestId/result", async (req, res) => {
 });
 
 router.delete("/:requestId", async (req, res) => {
-  const job = jobs.has(req.params.requestId);
+  const job = jobs.get(req.params.requestId);
 
   if (!job) {
     throw new AppError(404, "Slice request not found");
   }
 
-  await cleanupJob(req.params.requestId);
+  if (job.status === "pending" || job.status === "processing") {
+    throw new AppError(
+      400,
+      "Cannot delete a slice job that is still in progress",
+    );
+  }
+
+  await cleanupJob(job.id);
 
   res.status(204).send();
 });
