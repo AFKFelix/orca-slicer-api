@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import * as path from "path";
 import * as os from "os";
-import { execFileSync } from "child_process";
+import { execFile } from "child_process";
 import { AppError } from "../../middleware/error";
 import type {
   SlicingSettings,
@@ -15,7 +15,7 @@ export async function sliceModel(
   file: Buffer,
   filename: string,
   settings: SlicingSettings,
-  tempProfiles?: UploadedProfiles
+  tempProfiles?: UploadedProfiles,
 ): Promise<SliceResult> {
   let workdir: string;
   let inPath: string;
@@ -38,7 +38,7 @@ export async function sliceModel(
     throw new AppError(
       500,
       "Failed to prepare slicing",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 
@@ -74,7 +74,7 @@ export async function sliceModel(
   } else if (settings.filament) {
     args.push(
       "--load-filaments",
-      `${basePath}/filaments/${settings.filament}.json`
+      `${basePath}/filaments/${settings.filament}.json`,
     );
   }
 
@@ -95,14 +95,26 @@ export async function sliceModel(
     throw new AppError(
       500,
       "Slicing is not configured properly on the server",
-      "ORCASLICER_PATH environment variable is not defined"
+      "ORCASLICER_PATH environment variable is not defined",
     );
   }
 
   try {
-    execFileSync(process.env.ORCASLICER_PATH, args, {
-      encoding: "utf-8",
-      stdio: ["ignore", "pipe", "pipe"],
+    await new Promise<void>((resolve, reject) => {
+      execFile(
+        process.env.ORCASLICER_PATH as string,
+        args,
+        {
+          encoding: "utf-8",
+        },
+        (error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        },
+      );
     });
   } catch (err) {
     const resultJsonPath = path.join(outputDir, "result.json");
@@ -116,7 +128,7 @@ export async function sliceModel(
       throw new AppError(
         500,
         "Failed to slice the model",
-        err instanceof Error ? err.message : String(err)
+        err instanceof Error ? err.message : String(err),
       );
     }
 
@@ -125,7 +137,7 @@ export async function sliceModel(
 
       throw new AppError(
         500,
-        `Slicing failed with error from slicer: ${json.error_string}`
+        `Slicing failed with error from slicer: ${json.error_string}`,
       );
     }
 
@@ -134,7 +146,7 @@ export async function sliceModel(
     throw new AppError(
       500,
       "Failed to slice the model",
-      err instanceof Error ? err.message : String(err)
+      err instanceof Error ? err.message : String(err),
     );
   }
 
@@ -160,7 +172,7 @@ export async function sliceModel(
  * @returns The extracted metadata.
  */
 export async function getMetaDataFromFile(
-  filePath: string
+  filePath: string,
 ): Promise<SliceMetaData> {
   let data = {
     printTime: 0,
@@ -175,7 +187,7 @@ export async function getMetaDataFromFile(
     } catch (error) {
       console.error(
         "Failed to read G-code file for metadata extraction:",
-        error
+        error,
       );
     }
   } else if (filePath.endsWith(".3mf")) {
@@ -209,7 +221,7 @@ function parseMetaDataFromString(content: string): SliceMetaData {
     if (timeIndex !== -1) {
       const timeSlice = content.slice(timeIndex, timeIndex + 80);
       const timeMatch = timeSlice.match(
-        /total estimated time:\s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i
+        /total estimated time:\s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i,
       );
       if (timeMatch) {
         const days = parseInt(timeMatch[2] || "0");
@@ -222,12 +234,12 @@ function parseMetaDataFromString(content: string): SliceMetaData {
 
     if (timeIndex === -1) {
       const altTimeIndex = content.indexOf(
-        "; estimated printing time (normal mode)"
+        "; estimated printing time (normal mode)",
       );
       if (altTimeIndex !== -1) {
         const timeSlice = content.slice(altTimeIndex, altTimeIndex + 100);
         const timeMatch = timeSlice.match(
-          /; estimated printing time \(normal mode\) = \s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i
+          /; estimated printing time \(normal mode\) = \s*((?:(\d+)d\s*)?(?:(\d+)h\s*)?(?:(\d+)m\s*)?(?:(\d+)s)?)/i,
         );
         if (timeMatch) {
           const days = parseInt(timeMatch[2] || "0");
@@ -244,10 +256,10 @@ function parseMetaDataFromString(content: string): SliceMetaData {
     if (filamentMmIndex !== -1) {
       const filamentMmSlice = content.slice(
         filamentMmIndex,
-        filamentMmIndex + 50
+        filamentMmIndex + 50,
       );
       const mmMatch = filamentMmSlice.match(
-        /; filament used \[mm\] = \s*(\d+(\.\d+)?)/
+        /; filament used \[mm\] = \s*(\d+(\.\d+)?)/,
       );
       if (mmMatch) {
         data.filamentUsedMm = parseFloat(mmMatch[1]);
@@ -259,7 +271,7 @@ function parseMetaDataFromString(content: string): SliceMetaData {
     if (filamentGIndex !== -1) {
       const filamentGSlice = content.slice(filamentGIndex, filamentGIndex + 50);
       const gMatch = filamentGSlice.match(
-        /; filament used \[g\] = \s*(\d+(\.\d+)?)/
+        /; filament used \[g\] = \s*(\d+(\.\d+)?)/,
       );
       if (gMatch) {
         data.filamentUsedG = parseFloat(gMatch[1]);
@@ -274,7 +286,7 @@ function parseMetaDataFromString(content: string): SliceMetaData {
 
 async function writeTempProfiles(
   profiles: UploadedProfiles,
-  inputDir: string
+  inputDir: string,
 ): Promise<void> {
   try {
     const printerPath = path.join(inputDir, "printer.json");
@@ -298,7 +310,7 @@ async function writeTempProfiles(
     throw new AppError(
       500,
       "Failed to write temporary profiles",
-      error instanceof Error ? error.message : String(error)
+      error instanceof Error ? error.message : String(error),
     );
   }
 }
