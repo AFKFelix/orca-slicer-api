@@ -29,9 +29,14 @@ interface SliceJob {
 const router = Router();
 
 const jobs = new Map<string, SliceJob>();
-const jobRetentionMs = Number(
-  process.env.ASYNC_SLICE_RETENTION_MS ?? "3600000", // Default to 60 minutes
+
+const DEFAULT_JOB_RETENTION_MS = 60 * 60 * 1000; // 60 minutes
+const parsedJobRetentionMs = Number(
+  process.env.ASYNC_SLICE_RETENTION_MS ?? DEFAULT_JOB_RETENTION_MS.toString(),
 );
+const jobRetentionMs = Number.isNaN(parsedJobRetentionMs)
+  ? DEFAULT_JOB_RETENTION_MS
+  : parsedJobRetentionMs;
 
 const cleanupIntervalTimeMs = 60 * 60 * 1000; // 60 minutes
 const cleanupInterval = setInterval(() => {
@@ -104,7 +109,7 @@ router.get("/:requestId", async (req, res) => {
   }
 
   if (job.status === "failed") {
-    res.status(500).json({
+    res.status(200).json({
       requestId: job.id,
       status: job.status,
       message: job.errorMessage ?? "Failed to slice the model",
@@ -131,7 +136,7 @@ router.get("/:requestId/result", async (req, res) => {
     throw new AppError(404, "Slice request not found");
   }
 
-  if (job.status != "completed") {
+  if (job.status !== "completed") {
     res.status(400).json({
       message: "Slice job is not completed yet",
     });
@@ -248,7 +253,12 @@ async function aggregateMetaData(gcodes: string[]): Promise<SliceMetaData> {
 }
 
 function updateJob(job: SliceJob, update: Partial<SliceJob>) {
-  jobs.set(job.id, { ...job, ...update, updatedAt: new Date().toISOString() });
+  const currentJob = jobs.get(job.id) ?? job;
+  jobs.set(job.id, {
+    ...currentJob,
+    ...update,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 async function cleanupJob(requestId: string) {
@@ -266,17 +276,20 @@ async function cleanupJob(requestId: string) {
 
 async function deleteFinishedJobs() {
   const now = Date.now();
-
-  for (const job of jobs.values()) {
+  const jobsToClean = Array.from(jobs.values()).filter((job) => {
     if (job.status !== "completed" && job.status !== "failed") {
-      continue;
+      return false;
     }
 
     const updatedAt = Date.parse(job.updatedAt);
     if (now - updatedAt < jobRetentionMs) {
-      continue;
+      return false;
     }
 
+    return true;
+  });
+
+  for (const job of jobsToClean) {
     await cleanupJob(job.id);
   }
 }
