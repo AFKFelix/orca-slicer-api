@@ -9,6 +9,7 @@ This project only provides an REST API to the OrcaSlicer CLI, full credit to the
 - Slice models (STL, STEP, and 3MF) using OrcaSlicer and the profiles exported from it
 - Export sliced models as a single G-code or 3MF (with G-code included) file, or as a ZIP file containing multiple G-code files
 - Set parameters such as plate numbers, auto-arrange, auto-orient, filament, and more.
+- Slice models asynchronously with a simple job system. (Experimental, see [Async Slicing](#async-slicing) for details)
 
 ## Requirements 
 
@@ -79,7 +80,8 @@ npm run dev
 `ORCASLICER_PATH` (required): Absolute path to the OrcaSlicer binary.\
 `DATA_PATH` (required): Base directory for user uploaded profiles.\
 `NODE_ENV` (required): Sets if run in development or production.\
-`PORT` (optional): Port to run the server on, defaults to 3000.
+`PORT` (optional): Port to run the server on, defaults to 3000.\
+`ASYNC_SLICE_RETENTION_MS` (optional): Time in milliseconds to retain asynchronous slice jobs, defaults to 3600000 (60 minutes). Cleanup runs every 60 minutes.
 
 Profiles are stored under:
 
@@ -95,6 +97,15 @@ Each profile is a JSON file from OrcaSlicer.
 ## Security
 
 **WARNING**: No authentication or authorization is implemented. This service should never be exposed directly to the public internet without adding proper security layers.
+
+## Async Slicing
+
+The API supports asynchronous slicing via the `/slice-async` endpoint to handle bigger models that take longer to slice, without running into HTTP timeouts.
+When you submit a slicing job to this endpoint, it will return a unique `requestId` that you can use to check the status of the job and retrieve the results once it's completed. All jobs will run in the background in parallel, so there is no real queue system.
+
+Please also note that the jobs are only stored in memory and should be deleted after retrieval. If not deleted, they will be automatically removed after the time specified in `ASYNC_SLICE_RETENTION_MS` (default is 60 minutes).
+
+This feature is still experimental and might change in future releases, feedback is welcome!
 
 ## Roadmap
 

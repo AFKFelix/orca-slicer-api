@@ -7,7 +7,14 @@
   },
   "servers": [{ "url": "http://localhost:3000" }],
   "tags": [
-    { "name": "Slicing", "description": "Endpoints for slicing 3D models" },
+    {
+      "name": "Slicing",
+      "description": "Synchronous endpoints for slicing 3D models (blocks until complete)"
+    },
+    {
+      "name": "Async Slicing",
+      "description": "Asynchronous endpoints for slicing 3D models (fire and forget with polling)"
+    },
     {
       "name": "Profiles",
       "description": "Endpoints for managing printer, preset, and filament profiles"
@@ -154,6 +161,260 @@
         }
       }
     },
+    "/slice-async": {
+      "post": {
+        "tags": ["Async Slicing"],
+        "summary": "Start an asynchronous slice job",
+        "description": "Uploads a 3D model (STL, STEP, or 3MF) and returns a job ID for polling. The slicing happens in the background. Use the jobs ID with GET endpoints to check status and retrieve results.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "STL, STEP, or 3MF model file"
+                  },
+                  "printerProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in printer field)"
+                  },
+                  "presetProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in preset field)"
+                  },
+                  "filamentProfile": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
+                  },
+                  "printer": {
+                    "type": "string",
+                    "description": "Printer profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                  },
+                  "preset": {
+                    "type": "string",
+                    "description": "Preset profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                  },
+                  "filament": {
+                    "type": "string",
+                    "description": "Filament profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                  },
+                  "bedType": {
+                    "type": "string",
+                    "description": "Bed type as named inside the profile (optional, default: Textured PEI Plate)"
+                  },
+                  "plate": {
+                    "type": "string",
+                    "description": "Plate number to slice (optional, default: 1, 0 for all plates)"
+                  },
+                  "arrange": {
+                    "type": "boolean",
+                    "description": "Auto-arrange models on the plate (optional, default: false)"
+                  },
+                  "orient": {
+                    "type": "boolean",
+                    "description": "Auto-orient models (optional, default: false)"
+                  },
+                  "exportType": {
+                    "type": "string",
+                    "enum": ["gcode", "3mf"],
+                    "description": "Export gcode or 3mf (optional, default: gcode)"
+                  },
+                  "multicolorOnePlate": {
+                    "type": "boolean",
+                    "description": "Allow multicolor on one plate when using arrange (optional, default: false)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Slice job accepted for processing",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SliceJobResponse" }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input or missing parameters",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/slice-async/{requestId}": {
+      "get": {
+        "tags": ["Async Slicing"],
+        "summary": "Get slice job status",
+        "description": "Check the status of an asynchronous slice job. Returns job status (pending, processing, completed, failed) and metadata for completed jobs.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Unique job ID returned from POST /slice-async"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Job status retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SliceJobStatusResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Job ID not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Async Slicing"],
+        "summary": "Delete a slice job",
+        "description": "Deletes a slice job and associated files. Can be called on completed or failed jobs.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Unique job ID returned from POST /slice-async"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Job deleted successfully"
+          },
+          "404": {
+            "description": "Job ID not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "400": {
+            "description": "Job not completed or failed.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/slice-async/{requestId}/result": {
+      "get": {
+        "tags": ["Async Slicing"],
+        "summary": "Download slice job results",
+        "description": "Downloads the G-code or ZIP archive for a completed slice job. Only available when status is 'completed'. If multiple G-codes were generated (multi-plate), a ZIP archive is returned.",
+        "parameters": [
+          {
+            "name": "requestId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" },
+            "description": "Unique job ID returned from POST /slice-async"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "G-code or ZIP file generated successfully",
+            "headers": {
+              "X-Print-Time-Seconds": {
+                "description": "Estimated total print time in seconds",
+                "schema": { "type": "string" }
+              },
+              "X-Filament-Used-g": {
+                "description": "Filament used in grams",
+                "schema": { "type": "string" }
+              },
+              "X-Filament-Used-mm": {
+                "description": "Filament used in millimeters",
+                "schema": { "type": "string" }
+              }
+            },
+            "content": {
+              "application/octet-stream": {
+                "schema": { "type": "string", "format": "binary" }
+              }
+            }
+          },
+          "400": {
+            "description": "Job not completed yet",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "404": {
+            "description": "Job ID not found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Error" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/profiles/{category}": {
       "post": {
         "tags": ["Profiles"],
@@ -289,8 +550,7 @@
             }
           }
         }
-      }
-      ,
+      },
       "delete": {
         "tags": ["Profiles"],
         "summary": "Delete a specific profile by name",
@@ -347,6 +607,69 @@
         "type": "object",
         "properties": {
           "message": { "type": "string" }
+        }
+      },
+      "SliceMetadata": {
+        "type": "object",
+        "properties": {
+          "printTime": {
+            "type": "number",
+            "description": "Estimated print time in seconds"
+          },
+          "filamentUsedG": {
+            "type": "number",
+            "description": "Filament used in grams"
+          },
+          "filamentUsedMm": {
+            "type": "number",
+            "description": "Filament used in millimeters"
+          }
+        }
+      },
+      "SliceJobResponse": {
+        "type": "object",
+        "required": ["requestId", "status", "statusUrl"],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Unique job ID for polling status"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"],
+            "description": "Current job status"
+          },
+          "statusUrl": {
+            "type": "string",
+            "description": "URL to check job status"
+          }
+        }
+      },
+      "SliceJobStatusResponse": {
+        "type": "object",
+        "required": ["requestId", "status"],
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Unique job ID"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "processing", "completed", "failed"],
+            "description": "Current job status"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/SliceMetadata",
+            "description": "Slice metadata (only present when status is 'completed')"
+          },
+          "downloadUrl": {
+            "type": "string",
+            "description": "URL to download results (only present when status is 'completed')"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message (only present when status is 'failed')"
+          }
         }
       }
     }
