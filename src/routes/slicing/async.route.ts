@@ -30,10 +30,10 @@ const router = Router();
 
 const jobs = new Map<string, SliceJob>();
 const jobRetentionMs = Number(
-  process.env.ASYNC_SLICE_RETENTION_MS ?? "3600000",
+  process.env.ASYNC_SLICE_RETENTION_MS ?? "3600000", // Default to 60 minutes
 );
 
-const cleanupIntervalTimeMs = 60 * 60 * 1000;
+const cleanupIntervalTimeMs = 60 * 60 * 1000; // 60 minutes
 const cleanupInterval = setInterval(() => {
   void deleteFinishedJobs();
 }, cleanupIntervalTimeMs);
