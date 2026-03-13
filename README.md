@@ -23,11 +23,29 @@ This project only provides an REST API to the OrcaSlicer CLI, full credit to the
 > **WARNING:**
 > This project is still in early development and may not be suitable for real production use yet. Use at your own risk and ensure you add proper security measures.
 
-#### Docker (Recommended)
+#### Docker
 
-You can run the service in a Docker container. This was tested on Linux for now only and might still have some issues.
+Prebuilt multi-arch images are published to GitHub Container Registry at `ghcr.io/afkfelix/orca-slicer-api`.
 
-Run the following commands to set up and start the Docker container (you can change the OrcaSlicer version and architecture (arm64/amd64) as needed):
+Pull and run the latest image for a supported OrcaSlicer version:
+
+```bash
+docker pull ghcr.io/afkfelix/orca-slicer-api:latest-orca2.3.0
+mkdir ./data
+docker run -d \
+  --name orca-slicer-api \
+  -p 3000:3000 \
+  -v "./data:/app/data" \
+  ghcr.io/afkfelix/orca-slicer-api:latest-orca2.3.0
+```
+
+Release images are also published with tags in the format `v<api-version>-orca<orca-version>`, for example:
+
+```bash
+docker pull ghcr.io/afkfelix/orca-slicer-api:v0.3.0-orca2.3.0
+```
+
+If you want to build the image locally instead use:
 
 ```bash
 git clone https://github.com/AFKFelix/orca-slicer-api.git
@@ -35,27 +53,6 @@ cd orca-slicer-api
 docker build --build-arg ORCASLICER_VERSION=2.3.0 --build-arg TARGETARCH=amd64 -t orca-slicer-api .
 docker run -d -p 3000:3000 --name orca-slicer-api orca-slicer-api
 ```
-
-#### Setup Script
-
-Use the provided setup script to automate installation, configuration, and PM2 setup (Unix only):
-
-```bash
-curl -O https://raw.githubusercontent.com/AFKFelix/orca-slicer-api/main/setup.sh
-chmod +x setup.sh
-./setup.sh
-```
-
-The script will:
-
-- Check for required dependencies
-- Clone the repository
-- Prompt for configuration
-- Install dependencies and build the project
-- Start the API with PM2 and optionally set up auto-start
-
-Note: This setup works best with the AppImage version of OrcaSlicer. It has been tested successfully on Ubuntu (x86_64) using the AppImage, as well as on Debian running on a Raspberry Pi 4 (ARM64) via Flatpak.
-If you're using the Flatpak version, make sure to grant it access to the temporary directory, as this is required for slicing operations. Additionally, you will need to create a wrapper script or similar solution that can serve as the executable path to the OrcaSlicer binary.
 
 ### Local (Development)
 
@@ -117,10 +114,8 @@ There are still several improvements planned:
 - Better profile management system
 - Strengthened security measures
 - Additional quality-of-life features
-- Auto install of OrcaSlicer on setup script
-- Windows setup support
 - Better documentation
-- Tests and CI/CD setup
+- ~~Tests and CI/CD setup~~
 
 Feedback is welcome!
 
