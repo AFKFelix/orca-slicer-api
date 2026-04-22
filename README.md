@@ -50,7 +50,7 @@ If you want to build the image locally instead use:
 ```bash
 git clone https://github.com/AFKFelix/orca-slicer-api.git
 cd orca-slicer-api
-docker build --build-arg ORCASLICER_VERSION=2.3.0 --build-arg TARGETARCH=amd64 -t orca-slicer-api .
+docker build --build-arg ORCA_VERSION=2.3.0 -t orca-slicer-api .
 docker run -d -p 3000:3000 --name orca-slicer-api orca-slicer-api
 ```
 
