@@ -56,6 +56,7 @@ COPY --from=build /app/squashfs-root /app/squashfs-root
 
 ENV PORT=3000
 ENV ORCASLICER_PATH=/app/squashfs-root/AppRun
+ENV ORCASLICER_RESOURCES_PATH=/app/squashfs-root/resources
 ENV DATA_PATH=/app/data
 ENV NODE_ENV=production
 

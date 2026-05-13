@@ -22,8 +22,9 @@ router.post("/:category", uploadJson.single("file"), async (req, res) => {
 
   validateCategory(req.params.category as string);
 
+  const category = req.params.category as Category;
   const content = JSON.parse(req.file.buffer.toString("utf8"));
-  await saveSetting(req.params.category as Category, name, content);
+  await saveSetting(category, name, content);
   res.status(201).json({ name });
 });
 

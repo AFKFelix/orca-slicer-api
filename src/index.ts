@@ -6,6 +6,7 @@ import profiles from "./routes/profiles/route";
 import asyncSlicing from "./routes/slicing/async.route";
 import slicing from "./routes/slicing/route";
 import cors from "cors";
+import { initializeProfileIndex } from "./routes/profiles/inheritance.service";
 
 export const configureApp = () => {
   const app = express();
@@ -24,7 +25,7 @@ export const configureApp = () => {
         "X-Filament-Used-Mm",
         "X-Print-Time-Seconds",
       ],
-    })
+    }),
   );
 
   app.use(express.json());
@@ -49,13 +50,15 @@ if (process.env.NODE_ENV !== "production") {
       app.use(
         "/api-docs",
         swaggerUi.serve,
-        swaggerUi.setup(swaggerDocument.default)
+        swaggerUi.setup(swaggerDocument.default),
       );
     })
     .catch((err) => {
       console.error("Failed to load swagger.json:", err);
     });
 }
+
+await initializeProfileIndex();
 
 app.listen(port, () => {
   console.log(`App listening on port ${port}`);

@@ -63,6 +63,7 @@ cd orca-slicer-api
 # Create a .env file in the project root:
 # .env example
 ORCASLICER_PATH=/your/path/OrcaSlicer
+ORCASLICER_RESOURCES_PATH=/your/path/OrcaSlicer/resources
 DATA_PATH=/your/path/data
 NODE_ENV=development
 PORT=3000
@@ -75,6 +76,7 @@ npm run dev
 ## Configuration
 
 `ORCASLICER_PATH` (required): Absolute path to the OrcaSlicer binary.\
+`ORCASLICER_RESOURCES_PATH` (required): Absolute path to the OrcaSlicer resources directory, which contains the default profiles.\
 `DATA_PATH` (required): Base directory for user uploaded profiles.\
 `NODE_ENV` (required): Sets if run in development or production.\
 `PORT` (optional): Port to run the server on, defaults to 3000.\
