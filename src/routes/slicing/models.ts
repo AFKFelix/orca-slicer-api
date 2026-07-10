@@ -8,7 +8,7 @@ export interface SlicingSettings {
   arrange?: boolean;
   orient?: boolean;
   exportType?: "gcode" | "3mf";
-  resolveProfileInheritance?: boolean;
+  resolveProfileInheritance?: string;
 }
 
 export interface SliceResult {
