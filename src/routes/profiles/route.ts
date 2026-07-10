@@ -25,16 +25,12 @@ router.post("/:category", uploadJson.single("file"), async (req, res) => {
 
   const category = req.params.category as Category;
 
-  if (
-    resolveInheritance !== undefined &&
-    typeof resolveInheritance === "boolean" &&
-    resolveInheritance == false
-  ) {
-    const content = JSON.parse(req.file.buffer.toString("utf8"));
-    await saveSetting(category, name, content);
-  } else {
+  if (resolveInheritance !== undefined && resolveInheritance === "true") {
     const resolved = await resolveProfileInheritance(category, req.file.buffer);
     await saveSetting(category, name, resolved);
+  } else {
+    const content = JSON.parse(req.file.buffer.toString("utf8"));
+    await saveSetting(category, name, content);
   }
 
   res.status(201).json({ name });
