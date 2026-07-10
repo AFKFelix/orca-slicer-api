@@ -88,10 +88,13 @@ Profiles are stored under:
 <DATA_PATH>/
 ├── printers/
 ├── presets/
-└── filaments/
+├── filaments/
+└── system/
 ```
 
 Each profile is a JSON file from OrcaSlicer.
+System profiles are stored in the `system` folder. These profiles are JSON files with a randomly generated UUID as the filename.
+The `system` folder also includes a `index.json` file that contains a map of the actual profile names to the UUID filenames.
 
 ## Security
 
