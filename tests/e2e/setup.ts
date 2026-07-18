@@ -3,13 +3,16 @@ import supertest, { Test } from "supertest";
 import { Server } from "http";
 import type TestAgent from "supertest/lib/agent";
 import { loadEnvFile } from "process";
+import { configureApp } from "../../src/app";
+import { initializeProfileIndex } from "../../src/routes/profiles/inheritance.service";
 
 try {
   loadEnvFile();
 } catch {
   console.warn("No .env file found, proceeding without.");
 }
-const { configureApp } = await import("../../src/index");
+
+await initializeProfileIndex();
 const app = configureApp();
 
 let server: Server;
