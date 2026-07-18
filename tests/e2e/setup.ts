@@ -1,4 +1,3 @@
-import { configureApp } from "../../src/index";
 import { beforeAll, afterAll } from "vitest";
 import supertest, { Test } from "supertest";
 import { Server } from "http";
@@ -10,7 +9,7 @@ try {
 } catch {
   console.warn("No .env file found, proceeding without.");
 }
-
+const { configureApp } = await import("../../src/index");
 const app = configureApp();
 
 let server: Server;

@@ -1,17 +1,47 @@
-import { describe, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import { request } from "./setup";
 import fs from "fs";
 import path from "path";
 
 describe("Profiles API", () => {
-  const printerPath = path.join(__dirname, "../files/input/printer.json");
+  const orcaSlicerVersion = process.env.ORCASLICER_VERSION || "2.3.0";
+
+  const printerPath = path.join(
+    __dirname,
+    `../files/input/${orcaSlicerVersion}/full/printer.json`,
+  );
   const printerBuffer = fs.readFileSync(printerPath);
 
-  const presetPath = path.join(__dirname, "../files/input/process.json");
+  const presetPath = path.join(
+    __dirname,
+    `../files/input/${orcaSlicerVersion}/full/process.json`,
+  );
   const presetBuffer = fs.readFileSync(presetPath);
 
-  const filamentPath = path.join(__dirname, "../files/input/filament.json");
+  const filamentPath = path.join(
+    __dirname,
+    `../files/input/${orcaSlicerVersion}/full/filament.json`,
+  );
   const filamentBuffer = fs.readFileSync(filamentPath);
+
+  const inheritedPrinterBuffer = fs.readFileSync(
+    path.join(
+      __dirname,
+      `../files/input/${orcaSlicerVersion}/inheritance/printer.json`,
+    ),
+  );
+  const inheritedPresetBuffer = fs.readFileSync(
+    path.join(
+      __dirname,
+      `../files/input/${orcaSlicerVersion}/inheritance/process.json`,
+    ),
+  );
+  const inheritedFilamentBuffer = fs.readFileSync(
+    path.join(
+      __dirname,
+      `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+    ),
+  );
 
   describe("POST /profiles/:category", () => {
     it("should upload a printer profile successfully", async () => {
@@ -40,6 +70,63 @@ describe("Profiles API", () => {
         .attach("file", filamentBuffer, "filament.json")
         .expect(201)
         .expect({ name: "testfilament" });
+    });
+
+    it("should upload an inherited printer profile without resolving inheritance", async () => {
+      await request
+        .post("/profiles/printers")
+        .field("name", "inheritanceprinter")
+        .attach("file", inheritedPrinterBuffer, "printer.json")
+        .expect(201)
+        .expect({ name: "inheritanceprinter" });
+    });
+
+    it("should upload an inherited preset profile without resolving inheritance", async () => {
+      await request
+        .post("/profiles/presets")
+        .field("name", "inheritancepreset")
+        .attach("file", inheritedPresetBuffer, "process.json")
+        .expect(201)
+        .expect({ name: "inheritancepreset" });
+    });
+
+    it("should upload an inherited filament profile without resolving inheritance", async () => {
+      await request
+        .post("/profiles/filaments")
+        .field("name", "inheritancefilament")
+        .attach("file", inheritedFilamentBuffer, "filament.json")
+        .expect(201)
+        .expect({ name: "inheritancefilament" });
+    });
+
+    it("should upload an inherited printer profile with resolved inheritance", async () => {
+      await request
+        .post("/profiles/printers")
+        .field("name", "resolvedinheritanceprinter")
+        .field("resolveInheritance", "true")
+        .attach("file", inheritedPrinterBuffer, "printer.json")
+        .expect(201)
+        .expect({ name: "resolvedinheritanceprinter" });
+    });
+
+    it("should upload an inherited preset profile with resolved inheritance", async () => {
+      await request
+        .post("/profiles/presets")
+        .field("name", "resolvedinheritancepreset")
+        .field("resolveInheritance", "true")
+        .attach("file", inheritedPresetBuffer, "process.json")
+        .expect(201)
+        .expect({ name: "resolvedinheritancepreset" });
+    });
+
+    it("should upload an inherited filament profile with resolved inheritance", async () => {
+      await request
+        .post("/profiles/filaments")
+        .field("name", "resolvedinheritancefilament")
+        .field("resolveInheritance", "true")
+        .attach("file", inheritedFilamentBuffer, "filament.json")
+        .expect(201)
+        .expect({ name: "resolvedinheritancefilament" });
     });
 
     it("should return 400 for invalid category", async () => {
@@ -128,7 +215,7 @@ describe("Profiles API", () => {
         .expect((res) => {
           if (res.body.name !== "Bambu Lab P1S 0.4 nozzle")
             throw new Error(
-              `Profile content mismatch, got "${res.body.name}" expected "Bambu Lab P1S 0.4 nozzle"`
+              `Profile content mismatch, got "${res.body.name}" expected "Bambu Lab P1S 0.4 nozzle"`,
             );
         });
     });
@@ -140,7 +227,7 @@ describe("Profiles API", () => {
         .expect((res) => {
           if (res.body.name !== "0.20mm Standard @BBL X1C")
             throw new Error(
-              `Profile content mismatch, got "${res.body.name}" expected "0.20mm Standard @BBL X1C"`
+              `Profile content mismatch, got "${res.body.name}" expected "0.20mm Standard @BBL X1C"`,
             );
         });
     });
@@ -152,9 +239,72 @@ describe("Profiles API", () => {
         .expect((res) => {
           if (res.body.name !== "Bambu PETG Basic @BBL X1C")
             throw new Error(
-              `Profile content mismatch, got "${res.body.name}" expected "Bambu PETG Basic @BBL X1C"`
+              `Profile content mismatch, got "${res.body.name}" expected "Bambu PETG Basic @BBL X1C"`,
             );
         });
+    });
+
+    it("should get an unresolved inherited printer profile as uploaded", async () => {
+      const printer = await request
+        .get("/profiles/printers/inheritanceprinter")
+        .expect(200);
+      expect(printer.body).toEqual({
+        type: "machine",
+        name: "My P1S 0.4 nozzle",
+        from: "User",
+        inherits: "Bambu Lab P1S 0.6 nozzle",
+      });
+    });
+
+    it("should get an unresolved inherited preset profile as uploaded", async () => {
+      const preset = await request
+        .get("/profiles/presets/inheritancepreset")
+        .expect(200);
+      expect(preset.body).toEqual({
+        type: "process",
+        name: "My - 0.24mm Standard @BBL X1C 0.6 nozzle",
+        from: "User",
+        inherits: "0.24mm Standard @BBL X1C 0.6 nozzle",
+      });
+    });
+
+    it("should get an unresolved inherited filament profile as uploaded", async () => {
+      const filament = await request
+        .get("/profiles/filaments/inheritancefilament")
+        .expect(200);
+      expect(filament.body).toEqual({
+        type: "filament",
+        name: "My ASA",
+        from: "User",
+        inherits: "Generic ASA",
+      });
+    });
+
+    it("should get a resolved inherited printer profile with parent settings", async () => {
+      const printer = await request
+        .get("/profiles/printers/resolvedinheritanceprinter")
+        .expect(200);
+      expect(printer.body.name).toBe("My P1S 0.4 nozzle");
+      expect(printer.body.nozzle_diameter).toEqual(["0.6"]);
+      expect(printer.body.instantiation).toEqual("true");
+    });
+
+    it("should get a resolved inherited preset profile with parent settings", async () => {
+      const preset = await request
+        .get("/profiles/presets/resolvedinheritancepreset")
+        .expect(200);
+      expect(preset.body.name).toBe("My - 0.24mm Standard @BBL X1C 0.6 nozzle");
+      expect(preset.body.layer_height).toBe("0.24");
+      expect(preset.body.instantiation).toEqual("true");
+    });
+
+    it("should get a resolved inherited filament profile with parent settings", async () => {
+      const filament = await request
+        .get("/profiles/filaments/resolvedinheritancefilament")
+        .expect(200);
+      expect(filament.body.name).toBe("My ASA");
+      expect(filament.body.filament_type).toEqual(["ASA"]);
+      expect(filament.body.instantiation).toEqual("true");
     });
 
     it("should return error for non-existent printer profile", async () => {

@@ -36,7 +36,7 @@ export async function sliceModel(
       await writeTempProfiles(
         tempProfiles,
         inputDir,
-        settings.resolveProfileInheritance === 'true',
+        settings.resolveProfileInheritance === "true",
       );
     }
   } catch (error) {

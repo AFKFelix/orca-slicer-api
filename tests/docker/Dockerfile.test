@@ -1,6 +1,6 @@
 FROM ubuntu:24.04
 
-ARG ORCA_VERSION=2.3.1
+ARG ORCA_VERSION=2.3.0
 WORKDIR /app
 
 RUN apt-get update \
@@ -40,6 +40,7 @@ ENV NODE_ENV=test
 ENV DATA_PATH=/tmp/data
 ENV OUTPUT_PATH=/tmp/output
 ENV ORCASLICER_RESOURCES_PATH=/app/squashfs-root/resources
+ENV ORCASLICER_VERSION=${ORCA_VERSION}
 
 RUN mkdir -p /tmp/data /tmp/output
 
