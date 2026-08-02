@@ -147,6 +147,16 @@ router.get("/:requestId/result", async (req, res) => {
     throw new AppError(500, "Completed slice job is missing result files");
   }
 
+  const cleanup = async () => {
+    jobs.delete(job.id);
+    if (job.workdir) {
+      await fs.rm(job.workdir, { recursive: true, force: true });
+    }
+  };
+
+  res.on("finish", () => void cleanup());
+  res.on("close", () => void cleanup());
+
   res.set(generateMetaDataHeaders(job.metadata));
 
   if (job.gcodes.length === 1) {
