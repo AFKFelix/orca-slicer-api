@@ -38,6 +38,7 @@ ENV ORCASLICER_PATH=/app/squashfs-root/AppRun
 ENV DATA_PATH=/app/data
 ENV NODE_ENV=test
 ENV DATA_PATH=/tmp/data
+ENV SYSTEM_PROFILE_PATH=/tmp/system-profiles
 ENV OUTPUT_PATH=/tmp/output
 ENV ORCASLICER_RESOURCES_PATH=/app/squashfs-root/resources
 ENV ORCASLICER_VERSION=${ORCA_VERSION}

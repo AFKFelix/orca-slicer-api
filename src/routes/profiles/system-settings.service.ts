@@ -3,7 +3,10 @@ import { join } from "path";
 import { AppError } from "../../middleware/error";
 import type { Category } from "../slicing/models";
 
-const BASE = process.env.DATA_PATH || join(process.cwd(), "data");
+const BASE =
+  process.env.SYSTEM_PROFILE_PATH || join(process.cwd(), "system-profiles");
+
+const VERSION = process.env.ORCASLICER_VERSION || "2.3.1";
 
 /**
  * Saves a system setting object to a JSON file with a unique random filename in the system profile directory.
@@ -13,7 +16,7 @@ const BASE = process.env.DATA_PATH || join(process.cwd(), "data");
  */
 export async function saveSystemSetting(content: object) {
   try {
-    const dir = join(BASE, "system");
+    const dir = join(BASE, VERSION);
     await fs.mkdir(dir, { recursive: true });
     const filename = `${crypto.randomUUID()}.json`;
     await fs.writeFile(
@@ -33,7 +36,7 @@ export async function saveSystemSetting(content: object) {
 
 export async function getSystemSettingsIndex() {
   try {
-    const index = join(BASE, "system", "index.json");
+    const index = join(BASE, VERSION, "index.json");
     if (!existsSync(index)) {
       return null;
     }
@@ -52,8 +55,8 @@ export async function saveSystemSettingsIndex(
   content: Record<Category, Map<string, string>>,
 ) {
   try {
-    const index = join(BASE, "system", "index.json");
-    await fs.mkdir(join(BASE, "system"), { recursive: true });
+    const index = join(BASE, VERSION, "index.json");
+    await fs.mkdir(join(BASE, VERSION), { recursive: true });
     const serializable: Record<string, unknown> = {};
     for (const key of Object.keys(content)) {
       const val = (content as any)[key];
@@ -75,7 +78,7 @@ export async function saveSystemSettingsIndex(
 
 export async function clearSystemSettings() {
   try {
-    const dir = join(BASE, "system");
+    const dir = join(BASE, VERSION);
     await fs.rm(dir, { recursive: true, force: true });
   } catch (error) {
     throw new AppError(

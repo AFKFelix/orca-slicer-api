@@ -8,7 +8,7 @@
     "build": "tsc && tsc-esm-fix dist",
     "lint": "npx eslint ./src/**",
     "lint:fix": "npx eslint ./src/** --fix",
-    "test:e2e": "DATA_PATH=.test/data vitest run"
+    "test:e2e": "DATA_PATH=.test/data SYSTEM_PROFILE_PATH=.test/system-profiles vitest run"
   },
   "author": "Felix Lange",
   "license": "AGPL-3.0-or-later",

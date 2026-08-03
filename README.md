@@ -36,6 +36,7 @@ docker run -d \
   --name orca-slicer-api \
   -p 3000:3000 \
   -v "./data:/app/data" \
+  -v "./system-profiles:/app/system-profiles" \
   ghcr.io/afkfelix/orca-slicer-api:latest-orca2.3.0
 ```
 
@@ -51,7 +52,7 @@ If you want to build the image locally instead use:
 git clone https://github.com/AFKFelix/orca-slicer-api.git
 cd orca-slicer-api
 docker build --build-arg ORCA_VERSION=2.3.0 -t orca-slicer-api .
-docker run -d -p 3000:3000 --name orca-slicer-api orca-slicer-api
+docker run -d -p 3000:3000 --name orca-slicer-api -v "./data:/app/data" -v "./system-profiles:/app/system-profiles" orca-slicer-api
 ```
 
 ### Local (Development)
@@ -64,7 +65,9 @@ cd orca-slicer-api
 # .env example
 ORCASLICER_PATH=/your/path/OrcaSlicer
 ORCASLICER_RESOURCES_PATH=/your/path/OrcaSlicer/resources
+ORCASLICER_VERSION=2.3.0
 DATA_PATH=/your/path/data
+SYSTEM_PROFILE_PATH=/your/path/system-profiles
 NODE_ENV=development
 PORT=3000
 
@@ -77,7 +80,9 @@ npm run dev
 
 `ORCASLICER_PATH` (required): Absolute path to the OrcaSlicer binary.\
 `ORCASLICER_RESOURCES_PATH` (required): Absolute path to the OrcaSlicer resources directory, which contains the default profiles.\
-`DATA_PATH` (required): Base directory for user uploaded profiles.\
+`ORCASLICER_VERSION` (required): Version of the installed OrcaSlicer, e.g. `2.3.0`.\
+`DATA_PATH` (optional): Base directory for user uploaded profiles. Defaults to `./data`.\
+`SYSTEM_PROFILE_PATH` (optional): Base directory for system profiles. Defaults to `./system-profiles`.\
 `NODE_ENV` (required): Sets if run in development or production.\
 `PORT` (optional): Port to run the server on, defaults to 3000.\
 `ASYNC_SLICE_RETENTION_MS` (optional): Time in milliseconds to retain asynchronous slice jobs, defaults to 3600000 (60 minutes). Cleanup runs every 60 minutes.
@@ -93,8 +98,8 @@ Profiles are stored under:
 ```
 
 Each profile is a JSON file from OrcaSlicer.
-System profiles are stored in the `system` folder. These profiles are JSON files with a randomly generated UUID as the filename.
-The `system` folder also includes a `index.json` file that contains a map of the actual profile names to the UUID filenames.
+System profiles are stored in the folder specified by `SYSTEM_PROFILE_PATH` and in a subfolder named after the OrcaSlicer version (`ORCASLICER_VERSION`). These profiles are JSON files with a randomly generated UUID as the filename.
+The system profile folder also includes a `index.json` file that contains a map of the actual profile names to the UUID filenames.
 
 ## Security
 

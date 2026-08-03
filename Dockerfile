@@ -32,6 +32,8 @@ RUN npm run build
 
 FROM ubuntu:24.04
 
+ARG ORCA_VERSION=2.3.1
+
 RUN apt-get update \
 	&& apt-get upgrade -y \
 	&& apt-get install -y --no-install-recommends \
@@ -57,7 +59,9 @@ COPY --from=build /app/squashfs-root /app/squashfs-root
 ENV PORT=3000
 ENV ORCASLICER_PATH=/app/squashfs-root/AppRun
 ENV ORCASLICER_RESOURCES_PATH=/app/squashfs-root/resources
+ENV ORCASLICER_VERSION=${ORCA_VERSION}
 ENV DATA_PATH=/app/data
+ENV SYSTEM_PROFILE_PATH=/app/system-profiles
 ENV NODE_ENV=production
 
 EXPOSE 3000
