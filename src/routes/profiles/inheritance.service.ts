@@ -4,6 +4,7 @@ import type { Category } from "../slicing/models";
 import { AppError } from "../../middleware/error";
 import {
   clearSystemSettings,
+  getFilePath,
   getSystemSettingsIndex,
   saveSystemSetting,
   saveSystemSettingsIndex,
@@ -37,13 +38,20 @@ export async function resolveProfileInheritance(
   profileContent: Buffer,
 ) {
   const profile = await readBufferProfile(profileContent);
-  const parentProfilePath = searchCache[category].get(profile.inherits || "");
-  if (!parentProfilePath) {
+  if (!profile.inherits) {
+    return profile;
+  }
+
+  const parentProfileName = searchCache[category].get(profile.inherits);
+  if (!parentProfileName) {
     throw new AppError(
       500,
       `Parent profile "${profile.inherits}" not found in search cache for category "${category}".`,
     );
   }
+
+  const parentProfilePath = getFilePath(parentProfileName);
+
   try {
     const parentProfile = await readJsonProfile(parentProfilePath);
     return { ...parentProfile, ...profile };

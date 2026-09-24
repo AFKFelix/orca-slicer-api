@@ -12,7 +12,7 @@ const VERSION = process.env.ORCASLICER_VERSION || "2.3.1";
  * Saves a system setting object to a JSON file with a unique random filename in the system profile directory.
  * Creates the directory if it doesn't exist.
  * @param content - The object to be saved as JSON.
- * @returns A Promise that resolves with the file path when the file is written.
+ * @returns A Promise that resolves with the file name when the file is written.
  */
 export async function saveSystemSetting(content: object) {
   try {
@@ -24,7 +24,7 @@ export async function saveSystemSetting(content: object) {
       JSON.stringify(content, null, 2),
       "utf8",
     );
-    return join(dir, filename);
+    return filename;
   } catch (error) {
     throw new AppError(
       500,
@@ -32,6 +32,10 @@ export async function saveSystemSetting(content: object) {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+export function getFilePath(filename: string) {
+  return join(BASE, VERSION, filename);
 }
 
 export async function getSystemSettingsIndex() {

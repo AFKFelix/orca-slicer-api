@@ -54,6 +54,11 @@
                     "format": "binary",
                     "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
                   },
+                  "resolveProfileInheritance": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Resolve the inherits field of uploaded printerProfile, presetProfile, and filamentProfile files against OrcaSlicer's system profiles before slicing. Uploaded profiles without an inherits field are used unchanged, so inherited and complete profiles can be mixed."
+                  },
                   "printer": {
                     "type": "string",
                     "description": "Printer profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
@@ -193,6 +198,11 @@
                     "type": "string",
                     "format": "binary",
                     "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
+                  },
+                  "resolveProfileInheritance": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Resolve the inherits field of uploaded printerProfile, presetProfile, and filamentProfile files against OrcaSlicer's system profiles before slicing. Uploaded profiles without an inherits field are used unchanged, so inherited and complete profiles can be mixed."
                   },
                   "printer": {
                     "type": "string",
@@ -437,6 +447,11 @@
                   "name": {
                     "type": "string",
                     "description": "Name for the profile (alphanumeric)"
+                  },
+                  "resolveInheritance": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Resolve the uploaded profile's inherits field against OrcaSlicer's system profiles before saving it. A profile without an inherits field is saved unchanged."
                   }
                 }
               }

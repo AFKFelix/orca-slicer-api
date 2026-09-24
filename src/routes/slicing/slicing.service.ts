@@ -26,18 +26,30 @@ export async function sliceModel(
     workdir = await fs.mkdtemp(path.join(os.tmpdir(), "slice-"));
     inputDir = path.join(workdir, "input");
     outputDir = path.join(workdir, "output");
-    await fs.mkdir(inputDir, { recursive: true });
-    await fs.mkdir(outputDir, { recursive: true });
 
-    inPath = path.join(inputDir, filename);
-    await fs.writeFile(inPath, file);
+    try {
+      await fs.mkdir(inputDir, { recursive: true });
+      await fs.mkdir(outputDir, { recursive: true });
+
+      inPath = path.join(inputDir, filename);
+
+      await fs.writeFile(inPath, file);
+    } catch (err) {
+      await fs.rm(workdir, { recursive: true, force: true });
+      throw err;
+    }
 
     if (tempProfiles) {
-      await writeTempProfiles(
-        tempProfiles,
-        inputDir,
-        settings.resolveProfileInheritance === "true",
-      );
+      try {
+        await writeTempProfiles(
+          tempProfiles,
+          inputDir,
+          settings.resolveProfileInheritance === "true",
+        );
+      } catch (err) {
+        await fs.rm(workdir, { recursive: true, force: true });
+        throw err;
+      }
     }
   } catch (error) {
     throw new AppError(

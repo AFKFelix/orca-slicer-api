@@ -99,7 +99,7 @@ Profiles are stored under:
 
 Each profile is a JSON file from OrcaSlicer.
 System profiles are stored in the folder specified by `SYSTEM_PROFILE_PATH` and in a subfolder named after the OrcaSlicer version (`ORCASLICER_VERSION`). These profiles are JSON files with a randomly generated UUID as the filename.
-The system profile folder also includes a `index.json` file that contains a map of the actual profile names to the UUID filenames.
+The system profile folder also includes an `index.json` file that contains a map of the actual profile names to the UUID filenames. Index entries are stored as filenames and resolved with the setuped directory from the `SYSTEM_PROFILE_PATH` and `ORCASLICER_VERSION` environment variables when needed.
 
 ## Security
 

@@ -11,6 +11,9 @@ describe("Profiles API", () => {
     `../files/input/${orcaSlicerVersion}/full/printer.json`,
   );
   const printerBuffer = fs.readFileSync(printerPath);
+  const completePrinter = JSON.parse(printerBuffer.toString("utf8"));
+  delete completePrinter.inherits;
+  const completePrinterBuffer = Buffer.from(JSON.stringify(completePrinter));
 
   const presetPath = path.join(
     __dirname,
@@ -127,6 +130,21 @@ describe("Profiles API", () => {
         .attach("file", inheritedFilamentBuffer, "filament.json")
         .expect(201)
         .expect({ name: "resolvedinheritancefilament" });
+    });
+
+    it("should leave a complete profile unchanged when resolving inheritance", async () => {
+      await request
+        .post("/profiles/printers")
+        .field("name", "resolvedcompleteprinter")
+        .field("resolveInheritance", "true")
+        .attach("file", completePrinterBuffer, "printer.json")
+        .expect(201)
+        .expect({ name: "resolvedcompleteprinter" });
+
+      const printer = await request
+        .get("/profiles/printers/resolvedcompleteprinter")
+        .expect(200);
+      expect(printer.body).toEqual(completePrinter);
     });
 
     it("should return 400 for invalid category", async () => {
