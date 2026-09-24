@@ -253,7 +253,7 @@ async function indexCategory(
   for (const [name, profile] of profiles.entries()) {
     try {
       if (
-        (profile.instantiation && Boolean(profile.instantiation)) ||
+        (profile.instantiation && profile.instantiation === "true") ||
         includeNoneInstantiable
       ) {
         const resolvedProfile = resolveInheritance(
