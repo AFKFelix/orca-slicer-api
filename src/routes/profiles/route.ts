@@ -9,6 +9,11 @@ import {
 } from "./settings.service";
 import { AppError } from "../../middleware/error";
 import { resolveProfileInheritance } from "./inheritance.service";
+import {
+  validateCategory,
+  validateName,
+  validateProfileBuffer,
+} from "./validation";
 
 const router = Router();
 
@@ -24,6 +29,8 @@ router.post("/:category", uploadJson.single("file"), async (req, res) => {
   validateCategory(req.params.category as string);
 
   const category = req.params.category as Category;
+
+  validateProfileBuffer(category, req.file.buffer);
 
   if (resolveInheritance !== undefined && resolveInheritance === "true") {
     const resolved = await resolveProfileInheritance(category, req.file.buffer);
@@ -61,20 +68,5 @@ router.delete("/:category/:name", async (req, res) => {
   await deleteSetting(req.params.category as Category, req.params.name);
   res.status(204).send();
 });
-
-function validateCategory(category: string) {
-  if (!category || !["printers", "presets", "filaments"].includes(category)) {
-    throw new AppError(400, "Invalid or missing category");
-  }
-}
-
-function validateName(name: string) {
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    throw new AppError(400, "Name cannot be empty");
-  }
-  if (!/^[a-zA-Z0-9]+$/.test(name)) {
-    throw new AppError(400, "Name must only contain letters and numbers");
-  }
-}
 
 export default router;

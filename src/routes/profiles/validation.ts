@@ -1,0 +1,49 @@
+import { AppError } from "../../middleware/error";
+import type { Category } from "../slicing/models";
+
+const PROFILE_TYPES: Record<Category, string> = {
+  printers: "machine", // printer
+  presets: "process", // preset
+  filaments: "filament",
+};
+
+export function validateProfileBuffer(category: Category, profile: Buffer) {
+  const parsedProfile = JSON.parse(profile.toString("utf8"));
+
+  if (
+    typeof parsedProfile !== "object" ||
+    parsedProfile === null ||
+    Array.isArray(parsedProfile)
+  ) {
+    throw new AppError(400, "Profile must be a JSON object");
+  }
+
+  const record = parsedProfile as Record<string, unknown>;
+  if (record.type !== PROFILE_TYPES[category]) {
+    throw new AppError(
+      400,
+      `Invalid profile type for ${category}. Expected "${PROFILE_TYPES[category]}".`,
+    );
+  }
+  if (typeof record.name !== "string" || record.name.trim().length === 0) {
+    throw new AppError(400, "Profile must include a non-empty name");
+  }
+  if (typeof record.from !== "string" || record.from.trim().length === 0) {
+    throw new AppError(400, "Profile must include a non-empty from field");
+  }
+}
+
+export function validateCategory(category: string) {
+  if (!category || !["printers", "presets", "filaments"].includes(category)) {
+    throw new AppError(400, "Invalid or missing category");
+  }
+}
+
+export function validateName(name: string) {
+  if (!name || typeof name !== "string" || name.trim().length === 0) {
+    throw new AppError(400, "Name cannot be empty");
+  }
+  if (!/^[a-zA-Z0-9]+$/.test(name)) {
+    throw new AppError(400, "Name must only contain letters and numbers");
+  }
+}

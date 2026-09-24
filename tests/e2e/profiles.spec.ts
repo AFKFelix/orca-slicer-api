@@ -181,6 +181,51 @@ describe("Profiles API", () => {
             throw new Error("Wrong error message: " + res.body.message);
         });
     });
+
+    it.each([
+      ["printers", "process", "machine"],
+      ["presets", "machine", "process"],
+      ["filaments", "process", "filament"],
+    ])(
+      "should reject a %s profile with type %s",
+      async (category, type, expectedType) => {
+        await request
+          .post(`/profiles/${category}`)
+          .field("name", "invalidprofile")
+          .attach(
+            "file",
+            Buffer.from(JSON.stringify({ type, name: "Profile", from: "test" })),
+            "profile.json",
+          )
+          .expect(400)
+          .expect((res) => {
+            const expectedMessage = `Invalid profile type for ${category}. Expected "${expectedType}".`;
+            if (res.body.message !== expectedMessage) {
+              throw new Error("Wrong error message: " + res.body.message);
+            }
+          });
+      },
+    );
+
+    it.each([
+      ["array", "[]", "Profile must be a JSON object"],
+      ["null", "null", "Profile must be a JSON object"],
+      ["missing name", '{"type":"machine","from":"test"}', "Profile must include a non-empty name"],
+      ["blank name", '{"type":"machine","name":"  ","from":"test"}', "Profile must include a non-empty name"],
+      ["missing from", '{"type":"machine","name":"Profile"}', "Profile must include a non-empty from field"],
+      ["blank from", '{"type":"machine","name":"Profile","from":"  "}', "Profile must include a non-empty from field"],
+    ])("should reject profile with %s", async (_case, profile, message) => {
+      await request
+        .post("/profiles/printers")
+        .field("name", "invalidprofile")
+        .attach("file", Buffer.from(profile), "profile.json")
+        .expect(400)
+        .expect((res) => {
+          if (res.body.message !== message) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
+        });
+    });
   });
 
   describe("GET /profiles/:category", () => {
