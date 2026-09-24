@@ -11,4 +11,9 @@ export default defineConfig({
     include: ["tests/**/*.spec.ts"],
     setupFiles: "./tests/e2e/setup.ts",
   },
+  server: {
+    watch: {
+      ignored: ["**/.test/**", "**/node_modules/**"],
+    },
+  },
 });

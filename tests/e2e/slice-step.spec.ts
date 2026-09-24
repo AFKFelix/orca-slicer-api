@@ -209,6 +209,124 @@ describe("STEP Slicing", () => {
             throw new Error("Wrong error message: " + res.body.message);
         });
     });
+
+    it("should return error when a printer profile with a wrong type is uploaded", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.step");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerBuffer = Buffer.from(
+        JSON.stringify({ type: "filament", name: "Profile", from: "test" }),
+      );
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, {
+          filename: "Cube.step",
+          contentType: "application/step",
+        })
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(400)
+        .expect((res) => {
+          const expectedMessage = `Invalid profile type for printers. Expected "machine".`;
+          if (res.body.message !== expectedMessage) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
+        });
+    });
+
+    it("should return error when a filament profile with a wrong type is uploaded", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.step");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentBuffer = Buffer.from(
+        JSON.stringify({ type: "machine", name: "Profile", from: "test" }),
+      );
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, {
+          filename: "Cube.step",
+          contentType: "application/step",
+        })
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(400)
+        .expect((res) => {
+          const expectedMessage = `Invalid profile type for filaments. Expected "filament".`;
+          if (res.body.message !== expectedMessage) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
+        });
+    });
+
+    it("should return error when a preset profile with a wrong type is uploaded", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.step");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetBuffer = Buffer.from(
+        JSON.stringify({
+          type: "machine",
+          name: "Profile",
+          from: "test",
+        }),
+      );
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, {
+          filename: "Cube.step",
+          contentType: "application/step",
+        })
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(400)
+        .expect((res) => {
+          const expectedMessage = `Invalid profile type for presets. Expected "process".`;
+          if (res.body.message !== expectedMessage) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
+        });
+    });
   });
 
   describe("None Bambulab Settings", () => {
