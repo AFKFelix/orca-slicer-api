@@ -32,7 +32,8 @@ export async function sliceModel(
       await fs.mkdir(inputDir, { recursive: true });
       await fs.mkdir(outputDir, { recursive: true });
 
-      inPath = path.join(inputDir, filename);
+      const newFilename = `${crypto.randomUUID()}${path.extname(filename).toLowerCase()}`;
+      inPath = path.join(inputDir, newFilename);
 
       await fs.writeFile(inPath, file);
     } catch (err) {
