@@ -74,7 +74,7 @@ export async function saveSystemSettingsIndex(
   } catch (error) {
     throw new AppError(
       500,
-      `Failed to load system settings index`,
+      `Failed to save system settings index`,
       error instanceof Error ? error.message : String(error),
     );
   }
