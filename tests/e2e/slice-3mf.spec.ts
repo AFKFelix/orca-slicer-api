@@ -4,6 +4,8 @@ import fs from "fs";
 import path from "path";
 
 describe("3MF Slicing", () => {
+  const orcaSlicerVersion = process.env.ORCASLICER_VERSION || "2.3.0";
+
   describe("Bambulab Settings", () => {
     it("should slice file successfully with correct settings", async () => {
       const filePath = path.join(__dirname, "../files/input/Cube.3mf");
@@ -42,13 +44,22 @@ describe("3MF Slicing", () => {
       const filePath = path.join(__dirname, "../files/input/Cube.3mf");
       const fileBuffer = fs.readFileSync(filePath);
 
-      const printerPath = path.join(__dirname, "../files/input/printer.json");
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/printer.json`,
+      );
       const printerBuffer = fs.readFileSync(printerPath);
 
-      const presetPath = path.join(__dirname, "../files/input/process.json");
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/process.json`,
+      );
       const presetBuffer = fs.readFileSync(presetPath);
 
-      const filamentPath = path.join(__dirname, "../files/input/filament.json");
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
       const filamentBuffer = fs.readFileSync(filamentPath);
 
       await request
@@ -66,13 +77,22 @@ describe("3MF Slicing", () => {
       const filePath = path.join(__dirname, "../files/input/Cube.3mf");
       const fileBuffer = fs.readFileSync(filePath);
 
-      const printerPath = path.join(__dirname, "../files/input/printer.json");
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/printer.json`,
+      );
       const printerBuffer = fs.readFileSync(printerPath);
 
-      const presetPath = path.join(__dirname, "../files/input/process.json");
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/process.json`,
+      );
       const presetBuffer = fs.readFileSync(presetPath);
 
-      const filamentPath = path.join(__dirname, "../files/input/filament.json");
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
       const filamentBuffer = fs.readFileSync(filamentPath);
 
       const response = await request
@@ -94,6 +114,119 @@ describe("3MF Slicing", () => {
       expect(printTime).toBeGreaterThan(0);
       expect(filamentUsedG).toBeGreaterThan(0);
       expect(filamentUsedMm).toBeGreaterThan(0);
+    });
+
+    it("should return error with inherited profiles without resolveProfileInheritance", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, "Cube.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(500)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (
+            res.body.message !==
+            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+          )
+            throw new Error("Wrong error message: " + res.body.message);
+        });
+    });
+
+    it("should slice file with inherited profiles with resolveProfileInheritance = true", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .responseType("blob")
+        .field("resolveProfileInheritance", "true")
+        .attach("file", fileBuffer, "Cube.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(200)
+        .expect("Content-Type", /octet-stream/);
+    });
+
+    it("should return error with inherited profiles with resolveProfileInheritance = false", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .field("resolveProfileInheritance", "false")
+        .attach("file", fileBuffer, "Cube.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(500)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (
+            res.body.message !==
+            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+          )
+            throw new Error("Wrong error message: " + res.body.message);
+        });
     });
   });
 
@@ -137,23 +270,26 @@ describe("3MF Slicing", () => {
 
       const printerPath = path.join(
         __dirname,
-        "../files/input/megas-printer.json"
+        `../files/input/${orcaSlicerVersion}/full/megas-printer.json`,
       );
       const printerBuffer = fs.readFileSync(printerPath);
 
       const presetPath = path.join(
         __dirname,
-        "../files/input/megas-process.json"
+        `../files/input/${orcaSlicerVersion}/full/megas-process.json`,
       );
       const presetBuffer = fs.readFileSync(presetPath);
 
-      const filamentPath = path.join(__dirname, "../files/input/filament.json");
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
       const filamentBuffer = fs.readFileSync(filamentPath);
 
       await request
         .post("/slice")
         .responseType("blob")
-        .attach("file", fileBuffer, "Cube.3mf")
+        .attach("file", fileBuffer, "Cube-MegaS.3mf")
         .attach("printerProfile", printerBuffer, "printer.json")
         .attach("presetProfile", presetBuffer, "process.json")
         .attach("filamentProfile", filamentBuffer, "filament.json")
@@ -167,17 +303,20 @@ describe("3MF Slicing", () => {
 
       const printerPath = path.join(
         __dirname,
-        "../files/input/megas-printer.json"
+        `../files/input/${orcaSlicerVersion}/full/megas-printer.json`,
       );
       const printerBuffer = fs.readFileSync(printerPath);
 
       const presetPath = path.join(
         __dirname,
-        "../files/input/megas-process.json"
+        `../files/input/${orcaSlicerVersion}/full/megas-process.json`,
       );
       const presetBuffer = fs.readFileSync(presetPath);
 
-      const filamentPath = path.join(__dirname, "../files/input/filament.json");
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/full/filament.json`,
+      );
       const filamentBuffer = fs.readFileSync(filamentPath);
 
       const response = await request
@@ -199,6 +338,119 @@ describe("3MF Slicing", () => {
       expect(printTime).toBeGreaterThan(0);
       expect(filamentUsedG).toBeGreaterThan(0);
       expect(filamentUsedMm).toBeGreaterThan(0);
+    });
+
+    it("should return error with inherited profiles without resolveProfileInheritance", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube-MegaS.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, "Cube-MegaS.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(500)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (
+            res.body.message !==
+            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+          )
+            throw new Error("Wrong error message: " + res.body.message);
+        });
+    });
+
+    it("should slice file with inherited profiles with resolveProfileInheritance = true", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube-MegaS.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .responseType("blob")
+        .field("resolveProfileInheritance", "true")
+        .attach("file", fileBuffer, "Cube-MegaS.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(200)
+        .expect("Content-Type", /octet-stream/);
+    });
+
+    it("should return error with inherited profiles with resolveProfileInheritance = false", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube-MegaS.3mf");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      const printerPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-printer.json`,
+      );
+      const printerBuffer = fs.readFileSync(printerPath);
+
+      const presetPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/megas-process.json`,
+      );
+      const presetBuffer = fs.readFileSync(presetPath);
+
+      const filamentPath = path.join(
+        __dirname,
+        `../files/input/${orcaSlicerVersion}/inheritance/filament.json`,
+      );
+      const filamentBuffer = fs.readFileSync(filamentPath);
+
+      await request
+        .post("/slice")
+        .field("resolveProfileInheritance", "false")
+        .attach("file", fileBuffer, "Cube-MegaS.3mf")
+        .attach("printerProfile", printerBuffer, "printer.json")
+        .attach("presetProfile", presetBuffer, "process.json")
+        .attach("filamentProfile", filamentBuffer, "filament.json")
+        .expect(500)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (
+            res.body.message !==
+            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+          )
+            throw new Error("Wrong error message: " + res.body.message);
+        });
     });
   });
 });

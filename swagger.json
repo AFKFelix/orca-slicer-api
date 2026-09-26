@@ -5,7 +5,11 @@
     "version": "1.0.0",
     "description": "REST API for slicing 3D models (STL, STEP, 3MF) using the OrcaSlicer CLI. Upload and manage slicing profiles (printers, presets, filaments). Returns G-code or 3MF files, with multi-plate support (ZIP archive if multiple G-codes)."
   },
-  "servers": [{ "url": "http://localhost:3000" }],
+  "servers": [
+    {
+      "url": "http://localhost:3000"
+    }
+  ],
   "tags": [
     {
       "name": "Slicing",
@@ -42,29 +46,34 @@
                   "printerProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in printer field)"
+                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: system profile set in printer field or profile from 3mf)"
                   },
                   "presetProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in preset field)"
+                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: system profile set in preset field or profile from 3mf)"
                   },
                   "filamentProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
+                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: system profile set in filament field or profile from 3mf)"
+                  },
+                  "resolveProfileInheritance": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Resolve the inherits field of uploaded printerProfile, presetProfile, and filamentProfile files against OrcaSlicer's system profiles before slicing. Uploaded profiles without an inherits field are used unchanged, so inherited and complete profiles can be mixed."
                   },
                   "printer": {
                     "type": "string",
-                    "description": "Printer profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system printer profile, e.g. \"Bambu Lab P1S 0.4 nozzle\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "preset": {
                     "type": "string",
-                    "description": "Preset profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system preset profile, e.g. \"0.20mm Standard @BBL X1C\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "filament": {
                     "type": "string",
-                    "description": "Filament profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system filament profile, e.g. \"Generic ASA\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "bedType": {
                     "type": "string",
@@ -121,7 +130,10 @@
             },
             "content": {
               "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" },
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                },
                 "examples": {
                   "gcodeFile": {
                     "summary": "Example G-code file",
@@ -146,7 +158,9 @@
             "description": "Invalid input or missing parameters",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -154,7 +168,9 @@
             "description": "Slicing failed or server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -182,29 +198,34 @@
                   "printerProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in printer field)"
+                    "description": "Printer profile JSON file, prioritized over printer field, will not be saved to disk (optional, default: system profile set in printer field or profile from 3mf)"
                   },
                   "presetProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in preset field)"
+                    "description": "Preset profile JSON file, prioritized over preset field, will not be saved to disk (optional, default: system profile set in preset field or profile from 3mf)"
                   },
                   "filamentProfile": {
                     "type": "string",
                     "format": "binary",
-                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: profile from 3mf or uploaded profile set in filament field)"
+                    "description": "Filament profile JSON file, prioritized over filament field, will not be saved to disk (optional, default: system profile set in filament field or profile from 3mf)"
+                  },
+                  "resolveProfileInheritance": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Resolve the inherits field of uploaded printerProfile, presetProfile, and filamentProfile files against OrcaSlicer's system profiles before slicing. Uploaded profiles without an inherits field are used unchanged, so inherited and complete profiles can be mixed."
                   },
                   "printer": {
                     "type": "string",
-                    "description": "Printer profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system printer profile, e.g. \"Bambu Lab P1S 0.4 nozzle\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "preset": {
                     "type": "string",
-                    "description": "Preset profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system preset profile, e.g. \"0.20mm Standard @BBL X1C\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "filament": {
                     "type": "string",
-                    "description": "Filament profile name, must match uploaded profile (optional for 3mf, default: profile from 3mf)"
+                    "description": "Name of a system filament profile, e.g. \"Generic ASA\". Must be URL encoded (optional for 3mf, default: profile from 3mf)"
                   },
                   "bedType": {
                     "type": "string",
@@ -241,7 +262,9 @@
             "description": "Slice job accepted for processing",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/SliceJobResponse" }
+                "schema": {
+                  "$ref": "#/components/schemas/SliceJobResponse"
+                }
               }
             }
           },
@@ -249,7 +272,9 @@
             "description": "Invalid input or missing parameters",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -257,7 +282,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -274,7 +301,10 @@
             "name": "requestId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Unique job ID returned from POST /slice-async"
           }
         ],
@@ -293,7 +323,9 @@
             "description": "Job ID not found",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -301,7 +333,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -316,7 +350,10 @@
             "name": "requestId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Unique job ID returned from POST /slice-async"
           }
         ],
@@ -328,7 +365,9 @@
             "description": "Job ID not found",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -336,7 +375,9 @@
             "description": "Job not completed or failed.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -344,7 +385,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -361,7 +404,10 @@
             "name": "requestId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" },
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
             "description": "Unique job ID returned from POST /slice-async"
           }
         ],
@@ -371,20 +417,29 @@
             "headers": {
               "X-Print-Time-Seconds": {
                 "description": "Estimated total print time in seconds",
-                "schema": { "type": "string" }
+                "schema": {
+                  "type": "string"
+                }
               },
               "X-Filament-Used-g": {
                 "description": "Filament used in grams",
-                "schema": { "type": "string" }
+                "schema": {
+                  "type": "string"
+                }
               },
               "X-Filament-Used-mm": {
                 "description": "Filament used in millimeters",
-                "schema": { "type": "string" }
+                "schema": {
+                  "type": "string"
+                }
               }
             },
             "content": {
               "application/octet-stream": {
-                "schema": { "type": "string", "format": "binary" }
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
               }
             }
           },
@@ -392,7 +447,9 @@
             "description": "Job not completed yet",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -400,7 +457,9 @@
             "description": "Job ID not found",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -408,7 +467,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -416,68 +477,15 @@
       }
     },
     "/profiles/{category}": {
-      "post": {
-        "tags": ["Profiles"],
-        "summary": "Upload a profile (printer, preset, or filament)",
-        "description": "Upload a new printer, preset, or filament profile (OrcaSlicer JSON format).",
-        "parameters": [{ "$ref": "#/components/parameters/Category" }],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": ["file", "name"],
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary",
-                    "description": "OrcaSlicer profile JSON file"
-                  },
-                  "name": {
-                    "type": "string",
-                    "description": "Name for the profile (alphanumeric)"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Profile uploaded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": { "name": { "type": "string" } }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or missing parameters",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
       "get": {
         "tags": ["Profiles"],
-        "summary": "List all profiles in a category",
-        "description": "List all uploaded profiles for a given category (printers, presets, filaments).",
-        "parameters": [{ "$ref": "#/components/parameters/Category" }],
+        "summary": "List all system profiles in a category",
+        "description": "List all system profiles for a given category (printers, presets, filaments). Only system profiles extracted from the OrcaSlicer resources are available, user profiles cannot be created or modified.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Category"
+          }
+        ],
         "responses": {
           "200": {
             "description": "List of profile names",
@@ -485,7 +493,9 @@
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": { "type": "string" }
+                  "items": {
+                    "type": "string"
+                  }
                 }
               }
             }
@@ -494,7 +504,9 @@
             "description": "Invalid category",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -502,7 +514,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -512,16 +526,20 @@
     "/profiles/{category}/{name}": {
       "get": {
         "tags": ["Profiles"],
-        "summary": "Get a specific profile by name",
-        "description": "Get a specific printer, preset, or filament profile by name.",
+        "summary": "Get a specific system profile by name",
+        "description": "Get a specific system printer, preset, or filament profile by name. Inheritance is already resolved.",
         "parameters": [
-          { "$ref": "#/components/parameters/Category" },
+          {
+            "$ref": "#/components/parameters/Category"
+          },
           {
             "name": "name",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" },
-            "description": "Profile name (alphanumeric)"
+            "schema": {
+              "type": "string"
+            },
+            "description": "Name of the system profile, e.g. \"Bambu Lab P1S 0.4 nozzle\". Must be URL encoded."
           }
         ],
         "responses": {
@@ -529,15 +547,29 @@
             "description": "Profile JSON",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object"
+                }
               }
             }
           },
           "400": {
-            "description": "Invalid input",
+            "description": "Invalid category",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Profile not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           },
@@ -545,43 +577,9 @@
             "description": "Server error",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": ["Profiles"],
-        "summary": "Delete a specific profile by name",
-        "description": "Deletes a specific printer, preset, or filament profile by name.",
-        "parameters": [
-          { "$ref": "#/components/parameters/Category" },
-          {
-            "name": "name",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" },
-            "description": "Profile name (alphanumeric)"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Profile deleted"
-          },
-          "400": {
-            "description": "Invalid input",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/Error" }
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
               }
             }
           }
@@ -606,7 +604,9 @@
       "Error": {
         "type": "object",
         "properties": {
-          "message": { "type": "string" }
+          "message": {
+            "type": "string"
+          }
         }
       },
       "SliceMetadata": {

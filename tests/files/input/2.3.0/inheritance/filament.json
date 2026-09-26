@@ -1,0 +1,6 @@
+{
+  "type": "filament",
+  "name": "My ASA",
+  "from": "User",
+  "inherits": "Generic ASA"
+}

@@ -12,6 +12,7 @@ import type {
 } from "./models";
 import { getMetaDataFromFile, sliceModel } from "./slicing.service";
 import { generateMetaDataHeaders } from "./helpers";
+import { validateProfileBuffer } from "../profiles/validation";
 
 type SliceJobStatus = "pending" | "processing" | "completed" | "failed";
 
@@ -66,6 +67,21 @@ router.post(
       throw new AppError(400, "Model file is required for slicing");
     }
 
+    const uploadedProfiles = {
+      printer: files["printerProfile"]?.[0]?.buffer,
+      preset: files["presetProfile"]?.[0]?.buffer,
+      filament: files["filamentProfile"]?.[0]?.buffer,
+    };
+    if (uploadedProfiles.printer) {
+      validateProfileBuffer("printers", uploadedProfiles.printer);
+    }
+    if (uploadedProfiles.preset) {
+      validateProfileBuffer("presets", uploadedProfiles.preset);
+    }
+    if (uploadedProfiles.filament) {
+      validateProfileBuffer("filaments", uploadedProfiles.filament);
+    }
+
     const requestId = randomUUID();
     const job: SliceJob = {
       id: requestId,
@@ -77,13 +93,13 @@ router.post(
 
     const modelFile = files["file"][0];
     const settings = req.body as SlicingSettings;
-    const tempProfiles = {
-      printer: files["printerProfile"]?.[0]?.buffer,
-      preset: files["presetProfile"]?.[0]?.buffer,
-      filament: files["filamentProfile"]?.[0]?.buffer,
-    } as UploadedProfiles;
 
-    void processSliceJob(requestId, modelFile, settings, tempProfiles);
+    void processSliceJob(
+      requestId,
+      modelFile,
+      settings,
+      uploadedProfiles as UploadedProfiles,
+    );
 
     res.status(202).json({
       requestId,

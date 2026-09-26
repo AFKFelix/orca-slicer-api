@@ -1,0 +1,94 @@
+import { existsSync, promises as fs } from "fs";
+import { join } from "path";
+import { AppError } from "../../middleware/error";
+import type { Category } from "../slicing/models";
+
+const BASE =
+  process.env.SYSTEM_PROFILE_PATH || join(process.cwd(), "system-profiles");
+
+const VERSION = process.env.ORCASLICER_VERSION || "2.3.1";
+
+/**
+ * Saves a system setting object to a JSON file with a unique random filename in the system profile directory.
+ * Creates the directory if it doesn't exist.
+ * @param content - The object to be saved as JSON.
+ * @returns A Promise that resolves with the file name when the file is written.
+ */
+export async function saveSystemSetting(content: object) {
+  try {
+    const dir = join(BASE, VERSION);
+    await fs.mkdir(dir, { recursive: true });
+    const filename = `${crypto.randomUUID()}.json`;
+    await fs.writeFile(
+      join(dir, filename),
+      JSON.stringify(content, null, 2),
+      "utf8",
+    );
+    return filename;
+  } catch (error) {
+    throw new AppError(
+      500,
+      `Failed to save settings`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+export function getFilePath(filename: string) {
+  return join(BASE, VERSION, filename);
+}
+
+export async function getSystemSettingsIndex() {
+  try {
+    const index = join(BASE, VERSION, "index.json");
+    if (!existsSync(index)) {
+      return null;
+    }
+    const raw = await fs.readFile(index, "utf8");
+    return JSON.parse(raw) as Record<Category, Map<string, string> | null>;
+  } catch (error) {
+    throw new AppError(
+      500,
+      `Failed to load system settings index`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+export async function saveSystemSettingsIndex(
+  content: Record<Category, Map<string, string>>,
+) {
+  try {
+    const index = join(BASE, VERSION, "index.json");
+    await fs.mkdir(join(BASE, VERSION), { recursive: true });
+    const serializable: Record<string, unknown> = {};
+    for (const key of Object.keys(content)) {
+      const val = (content as any)[key];
+      if (val instanceof Map) {
+        serializable[key] = Object.fromEntries(val as Map<string, string>);
+      } else {
+        serializable[key] = val;
+      }
+    }
+    await fs.writeFile(index, JSON.stringify(serializable, null, 2), "utf8");
+  } catch (error) {
+    throw new AppError(
+      500,
+      `Failed to save system settings index`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}
+
+export async function clearSystemSettings() {
+  try {
+    const dir = join(BASE, VERSION);
+    await fs.rm(dir, { recursive: true, force: true });
+  } catch (error) {
+    throw new AppError(
+      500,
+      `Failed to clear system settings`,
+      error instanceof Error ? error.message : String(error),
+    );
+  }
+}

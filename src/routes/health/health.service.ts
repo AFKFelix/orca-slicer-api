@@ -11,7 +11,7 @@ export interface HealthCheck {
       version?: string;
       error?: string;
     };
-    dataPath: {
+    systemProfilePath: {
       accessible: boolean;
       error?: string;
     };
@@ -24,7 +24,7 @@ export async function checkHealth(): Promise<HealthCheck> {
     orcaslicer: {
       available: false,
     },
-    dataPath: {
+    systemProfilePath: {
       accessible: false,
     },
   };
@@ -62,17 +62,19 @@ export async function checkHealth(): Promise<HealthCheck> {
   }
 
   try {
-    const dataPath = process.env.DATA_PATH || path.join(process.cwd(), "data");
-    await fs.access(dataPath, fs.constants.R_OK | fs.constants.W_OK);
-    checks.dataPath.accessible = true;
+    const systemProfilePath =
+      process.env.SYSTEM_PROFILE_PATH ||
+      path.join(process.cwd(), "system-profiles");
+    await fs.access(systemProfilePath, fs.constants.R_OK);
+    checks.systemProfilePath.accessible = true;
   } catch (error) {
-    checks.dataPath.accessible = false;
-    checks.dataPath.error =
+    checks.systemProfilePath.accessible = false;
+    checks.systemProfilePath.error =
       error instanceof Error ? error.message : String(error);
   }
 
   const status =
-    checks.orcaslicer.available && checks.dataPath.accessible
+    checks.orcaslicer.available && checks.systemProfilePath.accessible
       ? "healthy"
       : "unhealthy";
 

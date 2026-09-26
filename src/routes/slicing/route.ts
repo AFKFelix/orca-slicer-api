@@ -11,6 +11,7 @@ import fs from "fs/promises";
 import path from "path";
 import archiver from "archiver";
 import { generateMetaDataHeaders } from "./helpers";
+import { validateProfileBuffer } from "../profiles/validation";
 
 const router = Router();
 
@@ -38,15 +39,26 @@ router.post(
 
     const modelFile = files["file"][0];
 
+    const uploadedProfiles = {
+      printer: files["printerProfile"]?.[0]?.buffer,
+      preset: files["presetProfile"]?.[0]?.buffer,
+      filament: files["filamentProfile"]?.[0]?.buffer,
+    };
+    if (uploadedProfiles.printer) {
+      validateProfileBuffer("printers", uploadedProfiles.printer);
+    }
+    if (uploadedProfiles.preset) {
+      validateProfileBuffer("presets", uploadedProfiles.preset);
+    }
+    if (uploadedProfiles.filament) {
+      validateProfileBuffer("filaments", uploadedProfiles.filament);
+    }
+
     const { gcodes, workdir } = await sliceModel(
       modelFile.buffer,
       modelFile.originalname,
       req.body as SlicingSettings,
-      {
-        printer: files["printerProfile"]?.[0]?.buffer,
-        preset: files["presetProfile"]?.[0]?.buffer,
-        filament: files["filamentProfile"]?.[0]?.buffer,
-      } as UploadedProfiles,
+      uploadedProfiles as UploadedProfiles,
     );
 
     if (gcodes.length === 1) {

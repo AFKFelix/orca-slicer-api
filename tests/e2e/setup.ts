@@ -1,9 +1,10 @@
-import { configureApp } from "../../src/index";
 import { beforeAll, afterAll } from "vitest";
 import supertest, { Test } from "supertest";
 import { Server } from "http";
 import type TestAgent from "supertest/lib/agent";
 import { loadEnvFile } from "process";
+import { configureApp } from "../../src/app";
+import { initializeProfileIndex } from "../../src/routes/profiles/inheritance.service";
 
 try {
   loadEnvFile();
@@ -11,6 +12,7 @@ try {
   console.warn("No .env file found, proceeding without.");
 }
 
+await initializeProfileIndex();
 const app = configureApp();
 
 let server: Server;

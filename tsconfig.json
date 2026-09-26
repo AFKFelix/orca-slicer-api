@@ -13,5 +13,8 @@
     "types": ["vitest"]
   },
   "include": ["**/*.ts"],
-  "exclude": ["dist"]
+  "exclude": ["dist"],
+  "watchOptions": {
+    "excludeDirectories": ["**/node_modules", "dist", "coverage", ".test"]
+  }
 }

@@ -10,6 +10,8 @@ import type {
   UploadedProfiles,
 } from "./models";
 import { Open } from "unzipper";
+import { writeTempProfile } from "./helpers";
+import { getProfileFilePath } from "../profiles/inheritance.service";
 
 export async function sliceModel(
   file: Buffer,
@@ -25,14 +27,31 @@ export async function sliceModel(
     workdir = await fs.mkdtemp(path.join(os.tmpdir(), "slice-"));
     inputDir = path.join(workdir, "input");
     outputDir = path.join(workdir, "output");
-    await fs.mkdir(inputDir, { recursive: true });
-    await fs.mkdir(outputDir, { recursive: true });
 
-    inPath = path.join(inputDir, filename);
-    await fs.writeFile(inPath, file);
+    try {
+      await fs.mkdir(inputDir, { recursive: true });
+      await fs.mkdir(outputDir, { recursive: true });
+
+      const newFilename = `${crypto.randomUUID()}${path.extname(filename).toLowerCase()}`;
+      inPath = path.join(inputDir, newFilename);
+
+      await fs.writeFile(inPath, file);
+    } catch (err) {
+      await fs.rm(workdir, { recursive: true, force: true });
+      throw err;
+    }
 
     if (tempProfiles) {
-      await writeTempProfiles(tempProfiles, inputDir);
+      try {
+        await writeTempProfiles(
+          tempProfiles,
+          inputDir,
+          settings.resolveProfileInheritance === "true",
+        );
+      } catch (err) {
+        await fs.rm(workdir, { recursive: true, force: true });
+        throw err;
+      }
     }
   } catch (error) {
     throw new AppError(
@@ -41,8 +60,6 @@ export async function sliceModel(
       error instanceof Error ? error.message : String(error),
     );
   }
-
-  const basePath = process.env.DATA_PATH || path.join(process.cwd(), "data");
 
   const args: string[] = [];
 
@@ -65,8 +82,9 @@ export async function sliceModel(
     const settingsArg = `${inputDir}/printer.json;${inputDir}/preset.json`;
     args.push("--load-settings", settingsArg);
   } else if (settings.printer && settings.preset) {
-    const settingsArg = `${basePath}/printers/${settings.printer}.json;${basePath}/presets/${settings.preset}.json`;
-    args.push("--load-settings", settingsArg);
+    const printerPath = getProfileFilePath("printers", settings.printer);
+    const presetPath = getProfileFilePath("presets", settings.preset);
+    args.push("--load-settings", `${printerPath};${presetPath}`);
   }
 
   if (tempProfiles?.filament) {
@@ -74,7 +92,7 @@ export async function sliceModel(
   } else if (settings.filament) {
     args.push(
       "--load-filaments",
-      `${basePath}/filaments/${settings.filament}.json`,
+      getProfileFilePath("filaments", settings.filament),
     );
   }
 
@@ -287,6 +305,7 @@ function parseMetaDataFromString(content: string): SliceMetaData {
 async function writeTempProfiles(
   profiles: UploadedProfiles,
   inputDir: string,
+  resolveInheritance?: boolean,
 ): Promise<void> {
   try {
     const printerPath = path.join(inputDir, "printer.json");
@@ -296,13 +315,36 @@ async function writeTempProfiles(
     const writes: Promise<void>[] = [];
 
     if (profiles.printer && profiles.printer.length > 0) {
-      writes.push(fs.writeFile(printerPath, profiles.printer));
+      writes.push(
+        writeTempProfile(
+          "printers",
+          profiles.printer,
+          printerPath,
+          resolveInheritance,
+        ),
+      );
     }
+
     if (profiles.preset && profiles.preset.length > 0) {
-      writes.push(fs.writeFile(presetPath, profiles.preset));
+      writes.push(
+        writeTempProfile(
+          "presets",
+          profiles.preset,
+          presetPath,
+          resolveInheritance,
+        ),
+      );
     }
+
     if (profiles.filament && profiles.filament.length > 0) {
-      writes.push(fs.writeFile(filamentPath, profiles.filament));
+      writes.push(
+        writeTempProfile(
+          "filaments",
+          profiles.filament,
+          filamentPath,
+          resolveInheritance,
+        ),
+      );
     }
 
     await Promise.all(writes);
