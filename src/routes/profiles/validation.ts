@@ -8,7 +8,12 @@ const PROFILE_TYPES: Record<Category, string> = {
 };
 
 export function validateProfileBuffer(category: Category, profile: Buffer) {
-  const parsedProfile = JSON.parse(profile.toString("utf8"));
+  let parsedProfile;
+  try {
+    parsedProfile = JSON.parse(profile.toString("utf8"));
+  } catch {
+    throw new AppError(400, "Profile must be valid JSON");
+  }
 
   if (
     typeof parsedProfile !== "object" ||
