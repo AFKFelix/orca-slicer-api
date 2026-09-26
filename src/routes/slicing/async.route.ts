@@ -67,17 +67,6 @@ router.post(
       throw new AppError(400, "Model file is required for slicing");
     }
 
-    const requestId = randomUUID();
-    const job: SliceJob = {
-      id: requestId,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    jobs.set(requestId, job);
-
-    const modelFile = files["file"][0];
-    const settings = req.body as SlicingSettings;
     const uploadedProfiles = {
       printer: files["printerProfile"]?.[0]?.buffer,
       preset: files["presetProfile"]?.[0]?.buffer,
@@ -92,6 +81,18 @@ router.post(
     if (uploadedProfiles.filament) {
       validateProfileBuffer("filaments", uploadedProfiles.filament);
     }
+
+    const requestId = randomUUID();
+    const job: SliceJob = {
+      id: requestId,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    jobs.set(requestId, job);
+
+    const modelFile = files["file"][0];
+    const settings = req.body as SlicingSettings;
 
     void processSliceJob(
       requestId,
