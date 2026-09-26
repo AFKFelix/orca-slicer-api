@@ -94,6 +94,26 @@ export async function initializeProfileIndex() {
   }
 }
 
+export async function getProfileNames(category: Category) {
+  return Array.from(searchCache[category].keys());
+}
+
+export function getProfileFilePath(category: Category, name: string) {
+  const profileFileName = searchCache[category].get(name);
+  if (!profileFileName) {
+    throw new AppError(
+      404,
+      `Profile "${name}" not found in category "${category}".`,
+    );
+  }
+
+  return getFilePath(profileFileName);
+}
+
+export async function getProfile(category: Category, name: string) {
+  return await readJsonProfile(getProfileFilePath(category, name));
+}
+
 async function buildProfileIndex() {
   const resourcesRoot = await findResourcesRoot();
 

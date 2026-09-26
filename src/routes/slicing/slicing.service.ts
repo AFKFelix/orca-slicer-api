@@ -11,6 +11,7 @@ import type {
 } from "./models";
 import { Open } from "unzipper";
 import { writeTempProfile } from "./helpers";
+import { getProfileFilePath } from "../profiles/inheritance.service";
 
 export async function sliceModel(
   file: Buffer,
@@ -59,8 +60,6 @@ export async function sliceModel(
     );
   }
 
-  const basePath = process.env.DATA_PATH || path.join(process.cwd(), "data");
-
   const args: string[] = [];
 
   if (settings.exportType === "3mf") {
@@ -82,8 +81,9 @@ export async function sliceModel(
     const settingsArg = `${inputDir}/printer.json;${inputDir}/preset.json`;
     args.push("--load-settings", settingsArg);
   } else if (settings.printer && settings.preset) {
-    const settingsArg = `${basePath}/printers/${settings.printer}.json;${basePath}/presets/${settings.preset}.json`;
-    args.push("--load-settings", settingsArg);
+    const printerPath = getProfileFilePath("printers", settings.printer);
+    const presetPath = getProfileFilePath("presets", settings.preset);
+    args.push("--load-settings", `${printerPath};${presetPath}`);
   }
 
   if (tempProfiles?.filament) {
@@ -91,7 +91,7 @@ export async function sliceModel(
   } else if (settings.filament) {
     args.push(
       "--load-filaments",
-      `${basePath}/filaments/${settings.filament}.json`,
+      getProfileFilePath("filaments", settings.filament),
     );
   }
 

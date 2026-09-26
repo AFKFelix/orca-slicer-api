@@ -12,20 +12,6 @@ const allowedModelMimeTypes = [
 ];
 const allowedModelExts = [".stl", ".step", ".stp", ".3mf"];
 
-export const uploadJson = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (file.mimetype !== "application/json" || ext !== ".json") {
-      return cb(
-        new AppError(400, "Invalid file type. Only JSON files are allowed.")
-      );
-    }
-    cb(null, true);
-  },
-  limits: { fileSize: 4_000_000 },
-});
-
 export const uploadModel = multer({
   storage,
   fileFilter: (req, file, cb) => {

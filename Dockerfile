@@ -60,7 +60,6 @@ ENV PORT=3000
 ENV ORCASLICER_PATH=/app/squashfs-root/AppRun
 ENV ORCASLICER_RESOURCES_PATH=/app/squashfs-root/resources
 ENV ORCASLICER_VERSION=${ORCA_VERSION}
-ENV DATA_PATH=/app/data
 ENV SYSTEM_PROFILE_PATH=/app/system-profiles
 ENV NODE_ENV=production
 

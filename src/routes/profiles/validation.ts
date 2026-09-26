@@ -38,12 +38,3 @@ export function validateCategory(category: string) {
     throw new AppError(400, "Invalid or missing category");
   }
 }
-
-export function validateName(name: string) {
-  if (!name || typeof name !== "string" || name.trim().length === 0) {
-    throw new AppError(400, "Name cannot be empty");
-  }
-  if (!/^[a-zA-Z0-9]+$/.test(name)) {
-    throw new AppError(400, "Name must only contain letters and numbers");
-  }
-}
