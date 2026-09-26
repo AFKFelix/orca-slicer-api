@@ -385,4 +385,38 @@ describe("STL Slicing", () => {
         .expect("Content-Type", /octet-stream/);
     });
   });
+
+  describe("System Profiles", () => {
+    it("should slice file successfully with system profiles referenced by name", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.stl");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      await request
+        .post("/slice")
+        .responseType("blob")
+        .field("printer", "Bambu Lab P1S 0.4 nozzle")
+        .field("preset", "0.20mm Standard @BBL X1C")
+        .field("filament", "Generic ASA")
+        .attach("file", fileBuffer, "Cube.stl")
+        .expect(200)
+        .expect("Content-Type", /octet-stream/);
+    });
+
+    it("should return error for unknown system profile name", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.stl");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      await request
+        .post("/slice")
+        .field("printer", "Nonexistent Printer")
+        .field("preset", "0.20mm Standard @BBL X1C")
+        .attach("file", fileBuffer, "Cube.stl")
+        .expect(404)
+        .expect((res) => {
+          const message = `Profile "Nonexistent Printer" not found in category "printers".`;
+          if (res.body.message !== message)
+            throw new Error("Wrong error message: " + res.body.message);
+        });
+    });
+  });
 });
