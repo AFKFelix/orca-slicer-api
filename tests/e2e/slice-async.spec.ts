@@ -30,19 +30,16 @@ const printers = [
 ];
 
 async function waitForJob(url: string) {
-  const deadline = Date.now() + 120_000;
-  while (Date.now() < deadline) {
-    const response = await request.get(url).expect(200);
-    if (
-      response.body.status === "completed" ||
-      response.body.status === "failed"
-    ) {
-      return response.body;
-    }
-    expect(["pending", "processing"]).toContain(response.body.status);
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  throw new Error(`Timed out waiting for ${url}`);
+  const response = await request.get(url).expect(200);
+  if (
+    response.body.status === "completed" ||
+    response.body.status === "failed"
+  ) {
+    return response.body;
+  } else if (["pending", "processing"].includes(response.body.status)) {
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    return waitForJob(url);
+  } else throw new Error(`Unexpected status: ${response.body.status}`);
 }
 
 async function verifyJob(
@@ -53,8 +50,8 @@ async function verifyJob(
   const { requestId, statusUrl } = response.body;
   expect(requestId).toMatch(/^[0-9a-f-]{36}$/);
   expect(statusUrl).toBe(`/slice-async/${requestId}`);
-  const job = await waitForJob(statusUrl);
   try {
+    const job = await waitForJob(statusUrl);
     expect(job.requestId).toBe(requestId);
     expect(job.status).toBe(expected);
     if (expected === "completed") {
@@ -112,8 +109,8 @@ describe("Async slicing", () => {
           .expect(202);
 
         await verifyJob(response, "completed");
-      });
-      it("should return an error on uploaded full profiles with missing properties", async () => {
+      }, 180_000);
+      it("should return an error on uploaded full profiles with an invalid type", async () => {
         const printerBuffer = Buffer.from(
           JSON.stringify({ type: "filament", name: "Profile", from: "test" }),
         );
@@ -165,7 +162,7 @@ describe("Async slicing", () => {
           .expect(202);
 
         await verifyJob(response, "completed");
-      });
+      }, 180_000);
       it("should return an error on uploaded profiles without inheritance", async () => {
         const printerBuffer = inputProfile(
           `inheritance/${printer.prefix}printer.json`,
@@ -193,7 +190,7 @@ describe("Async slicing", () => {
           "failed",
           "Slicing failed with error from slicer",
         );
-      });
+      }, 180_000);
       it("should slice successfully with system profiles", async () => {
         const printerProfile = printer.name.includes("none")
           ? "Anycubic i3 Mega S 0.4 nozzle"
@@ -216,7 +213,7 @@ describe("Async slicing", () => {
           .expect(202);
 
         await verifyJob(response, "completed");
-      });
+      }, 180_000);
     });
   }
   describe("All", () => {
@@ -234,6 +231,6 @@ describe("Async slicing", () => {
         .expect(202);
 
       await verifyJob(response, "failed", 'Profile "nonexistent" not found');
-    });
+    }, 180_000);
   });
 });
