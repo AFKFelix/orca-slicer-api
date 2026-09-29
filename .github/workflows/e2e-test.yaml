@@ -5,16 +5,15 @@ permissions:
 
 on:
   workflow_dispatch:
-    inputs:
-      orca_version:
-        description: "OrcaSlicer version to test"
-        required: false
-        default: "2.3.0"
 
 jobs:
   test:
-    name: E2E Test (Orca v${{ inputs.orca_version }})
+    name: E2E Test (Orca v${{ matrix.orca_version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        orca_version: ['2.3.0', '2.4.0', '2.4.2']
 
     steps:
       - name: Checkout repository
@@ -30,12 +29,12 @@ jobs:
           file: tests/docker/Dockerfile.test
           push: false
           load: true
-          tags: orca-v${{ inputs.orca_version }}-api-test
+          tags: orca-v${{ matrix.orca_version }}-api-test
           build-args: |
-            ORCA_VERSION=${{ inputs.orca_version }}
+            ORCA_VERSION=${{ matrix.orca_version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Run tests
         run: |
-          docker run --rm orca-v${{ inputs.orca_version }}-api-test
+          docker run --rm orca-v${{ matrix.orca_version }}-api-test
