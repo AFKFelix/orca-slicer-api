@@ -148,8 +148,10 @@ describe("3MF Slicing", () => {
         .expect("Content-Type", /json/)
         .expect((res) => {
           if (
-            res.body.message !==
-            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+            [
+              "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading.", //v2.3.2
+              "Slicing failed with error from slicer: The selected printer is not compatible with the 3mf.", //v2.4.2
+            ].includes(res.body.message) === false
           )
             throw new Error("Wrong error message: " + res.body.message);
         });
@@ -222,8 +224,10 @@ describe("3MF Slicing", () => {
         .expect("Content-Type", /json/)
         .expect((res) => {
           if (
-            res.body.message !==
-            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+            [
+              "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading.", //v2.3.2
+              "Slicing failed with error from slicer: The selected printer is not compatible with the 3mf.", //v2.4.2
+            ].includes(res.body.message) === false
           )
             throw new Error("Wrong error message: " + res.body.message);
         });
@@ -372,8 +376,10 @@ describe("3MF Slicing", () => {
         .expect("Content-Type", /json/)
         .expect((res) => {
           if (
-            res.body.message !==
-            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+            [
+              "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading.", //v2.3.2
+              "Slicing failed with error from slicer: The selected printer is not compatible with the process preset in the 3mf.", //v2.4.2
+            ].includes(res.body.message) === false
           )
             throw new Error("Wrong error message: " + res.body.message);
         });
@@ -446,8 +452,10 @@ describe("3MF Slicing", () => {
         .expect("Content-Type", /json/)
         .expect((res) => {
           if (
-            res.body.message !==
-            "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading."
+            [
+              "Slicing failed with error from slicer: There are some incorrect slicing parameters in the 3mf. Please verify the slicing of all plates in Orca Slicer before uploading.", //v2.3.2
+              "Slicing failed with error from slicer: The selected printer is not compatible with the process preset in the 3mf.", //v2.4.2
+            ].includes(res.body.message) === false
           )
             throw new Error("Wrong error message: " + res.body.message);
         });

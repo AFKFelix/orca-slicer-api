@@ -10,23 +10,29 @@ const inputProfile = (name: string) =>
 const input = (name: string) =>
   fs.readFileSync(path.join(__dirname, "../files/input", name));
 
+const stepSupported = version == "2.3.0";
+
 const printers = [
   { name: "Bambulab 3mf", prefix: "", model: "Cube.3mf" },
   { name: "none-Bambulab 3mf", prefix: "megas-", model: "Cube-MegaS.3mf" },
   { name: "Bambulab stl", prefix: "", model: "Cube.stl" },
   { name: "none-Bambulab stl", prefix: "megas-", model: "Cube.stl" },
-  {
-    name: "Bambulab step",
-    prefix: "",
-    model: "Cube.step",
-    contentType: "application/step",
-  },
-  {
-    name: "none-Bambulab step",
-    prefix: "megas-",
-    model: "Cube.step",
-    contentType: "application/step",
-  },
+  ...(stepSupported
+    ? [
+        {
+          name: "Bambulab step",
+          prefix: "",
+          model: "Cube.step",
+          contentType: "application/step",
+        },
+        {
+          name: "none-Bambulab step",
+          prefix: "megas-",
+          model: "Cube.step",
+          contentType: "application/step",
+        },
+      ]
+    : []),
 ];
 
 async function waitForJob(url: string) {
@@ -210,6 +216,7 @@ describe("Async slicing", () => {
           .field("printer", printerProfile)
           .field("preset", processProfile)
           .field("filament", "Generic ASA")
+          .field("bedType", "Textured PEI Plate")
           .expect(202);
 
         await verifyJob(response, "completed");

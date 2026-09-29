@@ -1,0 +1,6 @@
+{
+  "type": "process",
+  "name": "My MegaS Process",
+  "from": "User",
+  "inherits": "0.20mm Standard @Anycubic i3MegaS"
+}
