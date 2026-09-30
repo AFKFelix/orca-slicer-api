@@ -1,0 +1,7 @@
+{
+  "type": "machine",
+  "name": "My P1S 0.4 nozzle",
+  "from": "User",
+  "curr_bed_type": "Textured PEI Plate",
+  "inherits": "Bambu Lab P1S 0.6 nozzle"
+}

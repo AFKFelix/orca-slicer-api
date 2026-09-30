@@ -12,6 +12,11 @@ import type {
 import { Open } from "unzipper";
 import { writeTempProfile } from "./helpers";
 import { getProfileFilePath } from "../profiles/inheritance.service";
+import {
+  getStepUnsupportedMessage,
+  isStepFile,
+  isStepSupported,
+} from "../../utils/orca-version";
 
 export async function sliceModel(
   file: Buffer,
@@ -19,6 +24,10 @@ export async function sliceModel(
   settings: SlicingSettings,
   tempProfiles?: UploadedProfiles,
 ): Promise<SliceResult> {
+  if (isStepFile(filename) && !isStepSupported()) {
+    throw new AppError(400, getStepUnsupportedMessage());
+  }
+
   let workdir: string;
   let inPath: string;
   let inputDir: string;

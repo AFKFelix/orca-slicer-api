@@ -1,0 +1,6 @@
+{
+  "type": "machine",
+  "name": "My Anycubic i3 Mega S",
+  "from": "User",
+  "inherits": "Anycubic i3 Mega S 0.4 nozzle"
+}

@@ -5,8 +5,9 @@ import path from "path";
 
 describe("STEP Slicing", () => {
   const orcaSlicerVersion = process.env.ORCASLICER_VERSION || "2.3.0";
+  const stepSupported = orcaSlicerVersion == "2.3.0";
 
-  describe("Bambulab Settings", () => {
+  describe.skipIf(!stepSupported)("Bambulab Settings", () => {
     it("should slice file successfully with uploaded profiles", async () => {
       const filePath = path.join(__dirname, "../files/input/Cube.step");
       const fileBuffer = fs.readFileSync(filePath);
@@ -329,7 +330,7 @@ describe("STEP Slicing", () => {
     });
   });
 
-  describe("None Bambulab Settings", () => {
+  describe.skipIf(!stepSupported)("None Bambulab Settings", () => {
     it("should slice file successfully with uploaded profiles", async () => {
       const filePath = path.join(__dirname, "../files/input/Cube.step");
       const fileBuffer = fs.readFileSync(filePath);
@@ -530,6 +531,46 @@ describe("STEP Slicing", () => {
             "Slicing failed with error from slicer: The selected printer is not compatible with the process preset in the 3mf."
           )
             throw new Error("Wrong error message: " + res.body.message);
+        });
+    });
+  });
+
+  describe.skipIf(stepSupported)("Unsupported OrcaSlicer version", () => {
+    it("should reject STEP files with a clear error", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.step");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, {
+          filename: "Cube.step",
+          contentType: "application/step",
+        })
+        .expect(400)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (!res.body.message?.includes("STEP files are not supported")) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
+        });
+    });
+
+    it("should reject STP files with a clear error", async () => {
+      const filePath = path.join(__dirname, "../files/input/Cube.step");
+      const fileBuffer = fs.readFileSync(filePath);
+
+      await request
+        .post("/slice")
+        .attach("file", fileBuffer, {
+          filename: "Cube.stp",
+          contentType: "application/step",
+        })
+        .expect(400)
+        .expect("Content-Type", /json/)
+        .expect((res) => {
+          if (!res.body.message?.includes("STEP files are not supported")) {
+            throw new Error("Wrong error message: " + res.body.message);
+          }
         });
     });
   });

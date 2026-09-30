@@ -397,6 +397,7 @@ describe("STL Slicing", () => {
         .field("printer", "Bambu Lab P1S 0.4 nozzle")
         .field("preset", "0.20mm Standard @BBL X1C")
         .field("filament", "Generic ASA")
+        .field("bedType", "Textured PEI Plate")
         .attach("file", fileBuffer, "Cube.stl")
         .expect(200)
         .expect("Content-Type", /octet-stream/);

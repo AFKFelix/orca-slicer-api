@@ -1,6 +1,11 @@
 import multer from "multer";
 import path from "path";
 import { AppError } from "./error";
+import {
+  getStepUnsupportedMessage,
+  isStepFile,
+  isStepSupported,
+} from "../utils/orca-version";
 
 const storage = multer.memoryStorage();
 
@@ -28,6 +33,11 @@ export const uploadModel = multer({
         )
       );
     }
+
+    if (isStepFile(file.originalname) && !isStepSupported()) {
+      return cb(new AppError(400, getStepUnsupportedMessage()));
+    }
+
     cb(null, true);
   },
   limits: { fileSize: 100_000_000 },
@@ -56,6 +66,10 @@ export const uploadFullPrint = multer({
             "Invalid file type. Only STL, STEP, and 3MF files are allowed."
           )
         );
+      }
+
+      if (isStepFile(file.originalname) && !isStepSupported()) {
+        return cb(new AppError(400, getStepUnsupportedMessage()));
       }
 
       return cb(null, true);

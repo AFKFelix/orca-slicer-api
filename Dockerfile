@@ -7,20 +7,23 @@ WORKDIR /app
 
 # Download OrcaSlicer based on architecture
 # AMD64: Use official AppImage from SoftFever/OrcaSlicer
-# ARM64: Use custom-built AppImage from kldzj/orca-slicer-arm64
+# ARM64: Use custom-built AppImage from kldzj/orca-slicer-arm64 when version below 2.4.0
 RUN if [ "$TARGETARCH" = "arm64" ]; then \
-	echo "Downloading ARM64 AppImage from kldzj/orca-slicer-arm64..."; \
-	curl -o orca.AppImage -L "https://github.com/kldzj/orca-slicer-arm64/releases/download/v${ORCA_VERSION}-arm64/OrcaSlicer-${ORCA_VERSION}-arm64-linux.AppImage"; \
-	chmod +x orca.AppImage; \
-	./orca.AppImage --appimage-extract; \
-	rm orca.AppImage; \
+	if dpkg --compare-versions "$ORCA_VERSION" ge "2.4.0"; then \
+	URL="https://github.com/OrcaSlicer/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_aarch64_V${ORCA_VERSION}.AppImage"; \
 	else \
-	echo "Downloading AMD64 AppImage from SoftFever/OrcaSlicer..."; \
-	curl -o orca.AppImage -L "https://github.com/SoftFever/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_V${ORCA_VERSION}.AppImage"; \
-	chmod +x orca.AppImage; \
-	./orca.AppImage --appimage-extract; \
-	rm orca.AppImage; \
-	fi
+	URL="https://github.com/kldzj/orca-slicer-arm64/releases/download/v${ORCA_VERSION}-arm64/OrcaSlicer-${ORCA_VERSION}-arm64-linux.AppImage"; \
+	fi; \
+	else \
+	URL="https://github.com/OrcaSlicer/OrcaSlicer/releases/download/v${ORCA_VERSION}/OrcaSlicer_Linux_AppImage_Ubuntu2404_V${ORCA_VERSION}.AppImage"; \
+	fi && \
+	echo "Downloading $URL" && \
+	curl -o orca.AppImage -L "$URL" && \
+	chmod +x orca.AppImage && \
+	./orca.AppImage --appimage-extract && \
+	rm orca.AppImage
+
+
 
 COPY package*.json ./
 
@@ -44,7 +47,8 @@ RUN apt-get update \
 	&& apt-get update \
 	&& apt-get install -y --no-install-recommends \
 	nodejs \
-	libgl1 libgl1-mesa-dri libegl1 \
+	libgl1 libgl1-mesa-dri libegl1 libopengl0 libglu1-mesa \
+	libsm6 libice6 libmspack0t64 \
 	libgtk-3-0 \
 	libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 \
 	libwebkit2gtk-4.1-0 \

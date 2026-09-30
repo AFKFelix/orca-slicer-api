@@ -12,17 +12,28 @@ This project only provides an REST API to the OrcaSlicer CLI, full credit to the
 - Slice models asynchronously with a simple job system. (Experimental, see [Async Slicing](#async-slicing) for details)
 - Use system profiles by name, or upload profiles per request that can inherit from system profiles
 
-## Requirements 
+## Supported OrcaSlicer Versions
 
-- **Node.js** v22
-- **OrcaSlicer** (tested on Linux with AppImage and MacOS)
+| Version | Tests | Verified Docker Environments            |
+| ------- | ----- | --------------------------------------- |
+| 2.3.0   | ✅    | Ubuntu (amd64), Raspberry Pi OS (arm64) |
+| 2.4.0   | ✅    | ⏳ Not yet verified                     |
+| 2.4.2   | ✅    | ⏳ Not yet verified                     |
 
-## Installation
+## Project Scope
+
+This project is designed to be a **minimal slicing backend**, not a complete slicing platform or standalone application.
+
+The primary use case is to run it as a small service or sidecar that other applications can call to slice 3D models and retrieve information such as estimated print time, filament usage and generated G-code.
+
+The project intentionally is minimal. Responsibilities such as authentication, authorization, input validation, persistent job storage, user profile management, rate limiting and similar should be implemented by the service using this API.
+
+## Setup
 
 ### Production
 
 > **WARNING:**
-> This project is still in early development and may not be suitable for real production use yet. Use at your own risk and ensure you add proper security measures.
+> This project is still in development and may not be suitable for real production use yet. Use at your own risk and ensure you add proper security measures.
 
 #### Docker
 
@@ -31,19 +42,19 @@ Prebuilt multi-arch images are published to GitHub Container Registry at `ghcr.i
 Pull and run the latest image for a supported OrcaSlicer version:
 
 ```bash
-docker pull ghcr.io/afkfelix/orca-slicer-api:latest-orca2.3.0
+docker pull ghcr.io/afkfelix/orca-slicer-api:latest-orca2.4.2
 mkdir ./system-profiles
 docker run -d \
   --name orca-slicer-api \
   -p 3000:3000 \
   -v "./system-profiles:/app/system-profiles" \
-  ghcr.io/afkfelix/orca-slicer-api:latest-orca2.3.0
+  ghcr.io/afkfelix/orca-slicer-api:latest-orca2.4.2
 ```
 
 Release images are also published with tags in the format `v<api-version>-orca<orca-version>`, for example:
 
 ```bash
-docker pull ghcr.io/afkfelix/orca-slicer-api:v0.3.0-orca2.3.0
+docker pull ghcr.io/afkfelix/orca-slicer-api:v0.4.0-orca2.4.2
 ```
 
 If you want to build the image locally instead use:
@@ -51,7 +62,7 @@ If you want to build the image locally instead use:
 ```bash
 git clone https://github.com/AFKFelix/orca-slicer-api.git
 cd orca-slicer-api
-docker build --build-arg ORCA_VERSION=2.3.0 -t orca-slicer-api .
+docker build --build-arg ORCA_VERSION=2.4.2 -t orca-slicer-api .
 docker run -d -p 3000:3000 --name orca-slicer-api -v "./system-profiles:/app/system-profiles" orca-slicer-api
 ```
 
@@ -65,7 +76,7 @@ cd orca-slicer-api
 # .env example
 ORCASLICER_PATH=/your/path/OrcaSlicer
 ORCASLICER_RESOURCES_PATH=/your/path/OrcaSlicer/resources
-ORCASLICER_VERSION=2.3.0
+ORCASLICER_VERSION=YourOrcaSlicerVersion
 SYSTEM_PROFILE_PATH=/your/path/system-profiles
 NODE_ENV=development
 PORT=3000
@@ -79,7 +90,7 @@ npm run dev
 
 `ORCASLICER_PATH` (required): Absolute path to the OrcaSlicer binary.\
 `ORCASLICER_RESOURCES_PATH` (required): Absolute path to the OrcaSlicer resources directory, which contains the default profiles.\
-`ORCASLICER_VERSION` (required): Version of the installed OrcaSlicer, e.g. `2.3.0`.\
+`ORCASLICER_VERSION` (required): Version of the installed OrcaSlicer, e.g. `2.4.2`.\
 `SYSTEM_PROFILE_PATH` (optional): Base directory for system profiles. Defaults to `./system-profiles`.\
 `NODE_ENV` (required): Sets if run in development or production.\
 `PORT` (optional): Port to run the server on, defaults to 3000.\
@@ -110,21 +121,6 @@ When you submit a slicing job to this endpoint, it will return a unique `request
 Please also note that the jobs are only stored in memory and should be deleted after retrieval. If not deleted, they will be automatically removed after the time specified in `ASYNC_SLICE_RETENTION_MS` (default is 60 minutes).
 
 This feature is still experimental and might change in future releases, feedback is welcome!
-
-## Roadmap
-
-There are still several improvements planned:
-
-- ~~Multi-plate slicing support~~ (added for 3MF files, returns ZIP of G-codes)
-- ~~Enhanced slicing options~~
-- ~~Improved error handling~~
-- Better profile management system
-- Strengthened security measures
-- Additional quality-of-life features
-- Better documentation
-- ~~Tests and CI/CD setup~~
-
-Feedback is welcome!
 
 ## API Endpoints
 
