@@ -63,6 +63,6 @@ export function isStepSupported() {
 export function getStepUnsupportedMessage(): string {
   return (
     `STEP files are not supported with OrcaSlicer version ${getOrcaSlicerVersion()}. ` +
-    `The OrcaSlicer CLI dropped STEP support after v3.2.0`
+    `The OrcaSlicer CLI dropped STEP support after v2.3.0`
   );
 }
