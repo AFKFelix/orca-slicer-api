@@ -11,7 +11,7 @@
 
 import path from "path";
 
-export const STEP_LAST_SUPPORTED_VERSION = 230;
+export const STEP_LAST_SUPPORTED_VERSION: [number, number, number] = [2, 3, 0];
 
 const STEP_EXTENSIONS = new Set([".step", ".stp"]);
 
@@ -21,17 +21,25 @@ function getOrcaSlicerVersion() {
 }
 
 function parseVersionParts(version: string) {
-  const parts = version.split(".");
-  let versionStr = "";
-  for (let i = 0; i < parts.length; i++) {
-    const char = parts[i];
-    if (char >= "0" && char <= "9") {
-      versionStr += char;
-    } else {
-      break;
-    }
-  }
-  return parseInt(versionStr, 10);
+  const parts = version.match(/\d+\.\d+\.\d+/)?.[0].split(".") || [];
+  return [
+    parseInt(parts[0], 10) || 0,
+    parseInt(parts[1], 10) || 0,
+    parseInt(parts[2], 10) || 0,
+  ] satisfies [number, number, number];
+}
+
+/**
+ * Returns true if version `a` is bigger than version `b`.
+ */
+function isVersionBigger(
+  a: [number, number, number],
+  b: [number, number, number],
+) {
+  if (a[0] > b[0]) return true;
+  if (a[1] !== b[1]) return a[1] > b[1];
+  if (a[2] !== b[2]) return a[2] > b[2];
+  return false;
 }
 
 export function isStepFile(filename: string): boolean {
@@ -45,7 +53,10 @@ export function isStepFile(filename: string): boolean {
  */
 export function isStepSupported() {
   return (
-    parseVersionParts(getOrcaSlicerVersion()) <= STEP_LAST_SUPPORTED_VERSION
+    isVersionBigger(
+      parseVersionParts(getOrcaSlicerVersion()),
+      STEP_LAST_SUPPORTED_VERSION,
+    ) === false
   );
 }
 
