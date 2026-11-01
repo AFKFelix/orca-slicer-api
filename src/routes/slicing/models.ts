@@ -7,6 +7,7 @@ export interface SlicingSettings {
   multicolorOnePlate?: boolean;
   arrange?: boolean;
   orient?: boolean;
+  allowRotations?: boolean;
   exportType?: "gcode" | "3mf";
   resolveProfileInheritance?: string;
 }

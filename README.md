@@ -8,7 +8,7 @@ This project only provides an REST API to the OrcaSlicer CLI, full credit to the
 
 - Slice models (STL, STEP, and 3MF) using OrcaSlicer and the profiles exported from it
 - Export sliced models as a single G-code or 3MF (with G-code included) file, or as a ZIP file containing multiple G-code files
-- Set parameters such as plate numbers, auto-arrange, auto-orient, filament, and more.
+- Set parameters such as plate numbers, auto-arrange (with or without rotation), auto-orient, filament, and more.
 - Slice models asynchronously with a simple job system. (Experimental, see [Async Slicing](#async-slicing) for details)
 - Use system profiles by name, or upload profiles per request that can inherit from system profiles
 

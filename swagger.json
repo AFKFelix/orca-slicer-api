@@ -91,6 +91,10 @@
                     "type": "boolean",
                     "description": "Auto-orient models (optional, default: false)"
                   },
+                  "allowRotations": {
+                    "type": "boolean",
+                    "description": "Allow rotating models while auto-arranging. If omitted, the OrcaSlicer CLI default applies, which allows rotations (optional)"
+                  },
                   "exportType": {
                     "type": "string",
                     "enum": ["gcode", "3mf"],
@@ -242,6 +246,10 @@
                   "orient": {
                     "type": "boolean",
                     "description": "Auto-orient models (optional, default: false)"
+                  },
+                  "allowRotations": {
+                    "type": "boolean",
+                    "description": "Allow rotating models while auto-arranging. If omitted, the OrcaSlicer CLI default applies, which allows rotations (optional)"
                   },
                   "exportType": {
                     "type": "string",
