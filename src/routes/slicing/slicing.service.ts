@@ -87,6 +87,13 @@ export async function sliceModel(
     args.push("--orient", settings.orient ? "1" : "0");
   }
 
+  if (settings.allowRotations !== undefined) {
+    // Multipart form fields arrive as strings, so compare explicitly.
+    // The CLI only accepts the "=value" form; it rotates by default when arranging.
+    const allow = String(settings.allowRotations) === "true";
+    args.push(`--allow-rotations=${allow ? "1" : "0"}`);
+  }
+
   if (tempProfiles?.printer && tempProfiles?.preset) {
     const settingsArg = `${inputDir}/printer.json;${inputDir}/preset.json`;
     args.push("--load-settings", settingsArg);
